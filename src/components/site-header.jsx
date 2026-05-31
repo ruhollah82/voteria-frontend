@@ -30,8 +30,10 @@ export function SiteHeader() {
       <div className="flex w-full items-center gap-2 px-4 lg:gap-3 lg:px-6">
         <SidebarTrigger className="-ms-1" />
         <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
-        <h1 className="hidden text-base font-semibold sm:block">{title}</h1>
-        <div className="relative ms-auto w-full max-w-sm">
+        <h1 className="min-w-0 truncate text-sm font-semibold sm:text-base">
+          {title}
+        </h1>
+        <div className="relative ms-auto hidden w-full max-w-sm sm:block">
           <Search className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             aria-label="Search Voteria"
@@ -45,7 +47,15 @@ export function SiteHeader() {
             Create
           </Link>
         </Button>
-        <Button variant="ghost" size="icon" aria-label="Notifications">
+        <Button className="sm:hidden" variant="ghost" size="icon" aria-label="Search Voteria">
+          <Search className="size-4" />
+        </Button>
+        <Button
+          className="hidden min-[420px]:inline-flex"
+          variant="ghost"
+          size="icon"
+          aria-label="Notifications"
+        >
           <Bell className="size-4" />
         </Button>
         <Button

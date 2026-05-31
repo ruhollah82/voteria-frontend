@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Flame, LayoutGrid, ListFilter, Sparkles, TrendingUp } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Flame, ListFilter, Sparkles, TrendingUp } from "lucide-react";
 
 const filters = [
   { label: "Best", icon: Sparkles },
@@ -10,33 +10,28 @@ const filters = [
 
 export function FeedFilters({ activeFilter, onFilterChange }) {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-2 text-card-foreground sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-wrap items-center gap-1">
+    <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card p-1.5 shadow-sm">
+      <Tabs value={activeFilter} onValueChange={onFilterChange} className="min-w-0">
+        <TabsList className="w-full overflow-x-auto">
         {filters.map((filter) => {
           const Icon = filter.icon;
 
           return (
-            <Button
+            <TabsTrigger
               key={filter.label}
-              size="sm"
-              variant={activeFilter === filter.label ? "secondary" : "ghost"}
-              onClick={() => onFilterChange(filter.label)}
+              value={filter.label}
+              className="px-2.5"
             >
               <Icon className="size-4" />
               {filter.label}
-            </Button>
+            </TabsTrigger>
           );
         })}
-      </div>
-      <div className="flex items-center gap-1">
-        <Separator orientation="vertical" className="hidden h-5 sm:block" />
-        <Button size="icon-sm" variant="ghost" aria-label="Change feed layout">
-          <LayoutGrid className="size-4" />
-        </Button>
-        <Button size="icon-sm" variant="ghost" aria-label="Open feed filters">
-          <ListFilter className="size-4" />
-        </Button>
-      </div>
+        </TabsList>
+      </Tabs>
+      <Button size="icon-sm" variant="ghost" aria-label="Open feed filters">
+        <ListFilter className="size-4" />
+      </Button>
     </div>
   );
 }

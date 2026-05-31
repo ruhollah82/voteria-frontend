@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  CommunityStrip,
   FeedComposer,
   FeedFilters,
   FeedPostCard,
@@ -11,8 +12,9 @@ const HomePage = () => {
   const [activeFilter, setActiveFilter] = useState("Best");
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <section className="min-w-0 space-y-4">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_19rem]">
+      <section className="min-w-0 space-y-3">
+        <CommunityStrip />
         <FeedComposer />
         <FeedFilters
           activeFilter={activeFilter}
@@ -24,7 +26,7 @@ const HomePage = () => {
           ))}
         </div>
       </section>
-      <div className="lg:sticky lg:top-[calc(var(--header-height)+1rem)] lg:self-start">
+      <div className="hidden lg:sticky lg:top-[calc(var(--header-height)+1rem)] lg:block lg:self-start">
         <FeedRightRail />
       </div>
     </div>

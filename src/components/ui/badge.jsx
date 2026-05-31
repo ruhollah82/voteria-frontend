@@ -5,11 +5,11 @@ const Badge = React.forwardRef(
   ({ className, variant = "default", ...props }, ref) => {
     const variants = {
       default:
-        "rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700",
+        "inline-flex items-center rounded-md border border-transparent bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground",
       accent:
-        "rounded-full bg-secondary text-secondary-foreground px-2.5 py-1 text-xs font-semibold",
+        "inline-flex items-center rounded-md border border-transparent bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground",
       destructive:
-        "rounded-full bg-destructive text-destructive-foreground px-2.5 py-1 text-xs font-semibold",
+        "inline-flex items-center rounded-md border border-transparent bg-destructive px-2 py-0.5 text-xs font-medium text-destructive-foreground",
     };
 
     return (

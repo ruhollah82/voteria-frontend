@@ -15,7 +15,7 @@ export default function RootLayout() {
       <SidebarInset>
         <SiteHeader />
         <main className="flex flex-1 flex-col bg-muted/30">
-          <div className="@container/main mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 px-4 py-4 md:gap-6 md:px-6 md:py-6">
+          <div className="@container/main mx-auto flex w-full max-w-6xl flex-1 flex-col px-3 py-3 sm:px-4 md:px-6 md:py-5">
             <Outlet />
           </div>
         </main>

@@ -1,3 +1,4 @@
+export { CommunityStrip } from "./components/community-strip";
 export { FeedComposer } from "./components/feed-composer";
 export { FeedFilters } from "./components/feed-filters";
 export { FeedPostCard } from "./components/feed-post-card";

@@ -6,8 +6,8 @@ import { communities } from "@/lib/voteria-data";
 
 export function FeedRightRail() {
   return (
-    <aside className="space-y-4">
-      <Card>
+    <aside className="space-y-3">
+      <Card className="shadow-none">
         <CardHeader className="space-y-1 p-4">
           <p className="text-xs font-medium uppercase text-muted-foreground">
             Voteria
@@ -25,7 +25,7 @@ export function FeedRightRail() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="shadow-none">
         <CardHeader className="flex flex-row items-center justify-between gap-3 p-4">
           <div>
             <p className="text-xs font-medium uppercase text-muted-foreground">
