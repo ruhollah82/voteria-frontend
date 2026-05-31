@@ -54,7 +54,7 @@ body {
   --font-sans: "IBM Plex Sans", system-ui, sans-serif;
   --font-serif: "Noto Serif", serif;
   --font-mono: "IBM Plex Mono", monospace;
-  --radius: 0.75rem;
+  --radius: 1.25rem;
   --shadow-x: 0px;
   --shadow-y: 2px;
   --shadow-blur: 10px;
@@ -78,7 +78,11 @@ body {
   --spacing: 0.25rem;
   --scrollbar-track: transparent;
   --scrollbar-thumb: color-mix(in srgb, var(--foreground) 18%, transparent);
-  --scrollbar-thumb-hover: color-mix(in srgb, var(--foreground) 30%, transparent);
+  --scrollbar-thumb-hover: color-mix(
+    in srgb,
+    var(--foreground) 30%,
+    transparent
+  );
 }
 
 .dark {
@@ -117,7 +121,7 @@ body {
   --font-sans: "IBM Plex Sans", system-ui, sans-serif;
   --font-serif: "Noto Serif", serif;
   --font-mono: "IBM Plex Mono", monospace;
-  --radius: 0.75rem;
+  --radius: 1.25rem;
   --shadow-x: 0px;
   --shadow-y: 4px;
   --shadow-blur: 20px;
@@ -138,7 +142,11 @@ body {
     0px 4px 20px 0px hsl(0 0% 0% / 0.5), 0px 8px 10px -1px hsl(0 0% 0% / 0.5);
   --shadow-2xl: 0px 4px 20px 0px hsl(0 0% 0% / 1.25);
   --scrollbar-thumb: color-mix(in srgb, var(--foreground) 22%, transparent);
-  --scrollbar-thumb-hover: color-mix(in srgb, var(--foreground) 36%, transparent);
+  --scrollbar-thumb-hover: color-mix(
+    in srgb,
+    var(--foreground) 36%,
+    transparent
+  );
 }
 
 @theme inline {
