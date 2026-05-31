@@ -1,5 +1,6 @@
 "use client";
 
+import { Link, useLocation } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,20 +26,21 @@ import {
 
 export function NavProjects({ projects }) {
   const { isMobile } = useSidebar();
+  const { pathname } = useLocation();
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Projects</SidebarGroupLabel>
+      <SidebarGroupLabel>My Voteria</SidebarGroupLabel>
       <SidebarMenu>
         {projects.map((item) => {
           const Icon = item.icon;
           return (
             <SidebarMenuItem key={item.name}>
-              <SidebarMenuButton asChild>
-                <a href={item.url}>
+              <SidebarMenuButton asChild isActive={pathname === item.url}>
+                <Link to={item.url}>
                   {Icon ? <Icon className="size-4" /> : null}
                   <span>{item.name}</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -57,16 +59,16 @@ export function NavProjects({ projects }) {
                 >
                   <DropdownMenuItem>
                     <FolderIcon />
-                    <span>View Project</span>
+                    <span>Open</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <ArrowRightIcon />
-                    <span>Share Project</span>
+                    <span>Share</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem variant="destructive">
                     <Trash2Icon />
-                    <span>Delete Project</span>
+                    <span>Remove</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
