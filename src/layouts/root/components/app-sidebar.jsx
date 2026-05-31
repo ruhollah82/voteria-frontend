@@ -9,7 +9,7 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "./ui/sidebar";
+} from "@/components/ui/sidebar";
 
 export function AppSidebar(props) {
   return (
