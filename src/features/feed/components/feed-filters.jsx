@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { Flame, ListFilter, Sparkles, TrendingUp } from "lucide-react";
 
 const filters = [
@@ -10,28 +10,39 @@ const filters = [
 
 export function FeedFilters({ activeFilter, onFilterChange }) {
   return (
-    <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card p-1.5 shadow-sm">
-      <Tabs value={activeFilter} onValueChange={onFilterChange} className="min-w-0">
-        <TabsList className="w-full overflow-x-auto">
+    <div className="rounded-lg border border-border bg-card shadow-none">
+      <div className="flex items-center gap-2 overflow-x-auto p-1.5">
+        <span className="hidden shrink-0 px-2 text-xs font-medium text-muted-foreground sm:inline">
+          Sort
+        </span>
         {filters.map((filter) => {
           const Icon = filter.icon;
+          const isActive = activeFilter === filter.label;
 
           return (
-            <TabsTrigger
+            <Button
               key={filter.label}
-              value={filter.label}
-              className="px-2.5"
+              size="sm"
+              variant="ghost"
+              className={cn(
+                "h-8 shrink-0 px-2.5 text-muted-foreground",
+                isActive &&
+                  "bg-muted text-foreground shadow-sm hover:bg-muted hover:text-foreground",
+              )}
+              aria-pressed={isActive}
+              onClick={() => onFilterChange(filter.label)}
             >
               <Icon className="size-4" />
               {filter.label}
-            </TabsTrigger>
+            </Button>
           );
         })}
-        </TabsList>
-      </Tabs>
-      <Button size="icon-sm" variant="ghost" aria-label="Open feed filters">
-        <ListFilter className="size-4" />
-      </Button>
+        <div className="ms-auto shrink-0">
+          <Button size="icon-sm" variant="ghost" aria-label="Open feed filters">
+            <ListFilter className="size-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

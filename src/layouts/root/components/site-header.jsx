@@ -28,8 +28,11 @@ export function SiteHeader() {
     <header
       className="flex h-(--header-height) shrink-0 items-center gap-2 border-b bg-background transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex w-full items-center gap-2 px-4 lg:gap-3 lg:px-6">
-        <SidebarTrigger className="-ms-1" />
-        <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
+        <SidebarTrigger className="-ms-1 md:hidden" />
+        <Separator
+          orientation="vertical"
+          className="mx-2 data-[orientation=vertical]:h-4 md:hidden"
+        />
         <h1 className="min-w-0 truncate text-sm font-semibold sm:text-base">
           {title}
         </h1>

@@ -245,27 +245,31 @@ function SidebarTrigger({ className, onClick, ...props }) {
 }
 
 function SidebarRail({ className, ...props }) {
-  const { toggleSidebar } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
 
   return (
     <button
       data-sidebar="rail"
       data-slot="sidebar-rail"
       aria-label="Toggle Sidebar"
-      tabIndex={-1}
+      aria-pressed={state === "collapsed"}
       onClick={toggleSidebar}
       title="Toggle Sidebar"
       className={cn(
-        "absolute inset-y-0 z-20 hidden w-4 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:start-1/2 after:w-[2px] hover:after:bg-sidebar-border sm:flex ltr:-translate-x-1/2 rtl:-translate-x-1/2",
-        "in-data-[side=left]:cursor-w-resize rtl:in-data-[side=left]:cursor-e-resize in-data-[side=right]:cursor-e-resize rtl:in-data-[side=right]:cursor-w-resize",
-        "[[data-side=left][data-state=collapsed]_&]:cursor-e-resize rtl:[[data-side=left][data-state=collapsed]_&]:cursor-w-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize rtl:[[data-side=right][data-state=collapsed]_&]:cursor-e-resize",
-        "group-data-[collapsible=offcanvas]:translate-x-0 rtl:group-data-[collapsible=offcanvas]:-translate-x-0 group-data-[collapsible=offcanvas]:after:start-full hover:group-data-[collapsible=offcanvas]:bg-sidebar",
-        "[[data-side=left][data-collapsible=offcanvas]_&]:-end-2",
-        "[[data-side=right][data-collapsible=offcanvas]_&]:-start-2",
+        "absolute top-4 z-30 hidden size-7 items-center justify-center rounded-full border border-sidebar-border bg-background text-muted-foreground shadow-sm transition-all hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none md:flex",
+        "group-data-[side=left]:-right-3.5 group-data-[side=right]:-left-3.5",
+        "group-data-[collapsible=offcanvas]:hidden",
         className,
       )}
       {...props}
-    />
+    >
+      <PanelLeftIcon
+        className={cn(
+          "size-3.5 transition-transform rtl:rotate-180",
+          state === "collapsed" && "rotate-180 rtl:rotate-0",
+        )}
+      />
+    </button>
   );
 }
 

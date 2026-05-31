@@ -6,7 +6,7 @@ import { communities } from "@/lib/voteria-data";
 
 export function FeedRightRail() {
   return (
-    <aside className="space-y-3">
+    <aside className="max-h-[calc(100svh-var(--header-height)-2.5rem)] space-y-3 overflow-y-auto pe-1">
       <Card className="shadow-none">
         <CardHeader className="space-y-1 p-4">
           <p className="text-xs font-medium uppercase text-muted-foreground">
