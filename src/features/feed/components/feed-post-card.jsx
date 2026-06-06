@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   Share2,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function FeedPostCard({ post }) {
   return (
@@ -31,7 +32,9 @@ export function FeedPostCard({ post }) {
               <span>{post.createdAt}</span>
             </div>
             <h2 className="mt-1 text-base font-semibold leading-6 text-card-foreground sm:text-lg">
-              {post.title}
+              <Link to={`/post/${post.id}`} className="hover:underline">
+                {post.title}
+              </Link>
             </h2>
           </div>
           <Button size="icon-sm" variant="ghost" aria-label="More post options">
