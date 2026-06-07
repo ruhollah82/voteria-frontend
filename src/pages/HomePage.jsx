@@ -18,14 +18,15 @@ const SORT_MAP = {
 export default function HomePage() {
   const [activeFilter, setActiveFilter] = useState("Best");
   const { posts, loading, error, fetchPosts, hasMore, page } = usePostsStore();
+  const sortBy = SORT_MAP[activeFilter];
 
   useEffect(() => {
-    fetchPosts(1, SORT_MAP[activeFilter]);
-  }, [activeFilter]);
+    fetchPosts(1, sortBy);
+  }, [fetchPosts, sortBy]);
 
   const handleLoadMore = () => {
     if (!loading && hasMore) {
-      fetchPosts(page + 1, SORT_MAP[activeFilter]);
+      fetchPosts(page + 1, sortBy);
     }
   };
 
@@ -34,7 +35,7 @@ export default function HomePage() {
       <section className="min-h-0 min-w-0 overflow-y-auto pe-1">
         <div className="space-y-3 pb-6">
           <CommunityStrip />
-          <FeedComposer />
+          <FeedComposer sortBy={sortBy} />
           <FeedFilters
             activeFilter={activeFilter}
             onFilterChange={setActiveFilter}
@@ -62,7 +63,7 @@ export default function HomePage() {
               : posts.map((post) => (
                   <FeedPostCard
                     key={`${post.id}-${post.created_at}`}
-                    post={normalisePost(post)}
+                    post={post}
                   />
                 ))}
           </div>
@@ -93,39 +94,4 @@ export default function HomePage() {
       </div>
     </div>
   );
-}
-
-/**
- * Map backend PostOutput → shape that FeedPostCard expects
- * (backend uses snake_case + different field names)
- */
-function normalisePost(p) {
-  return {
-    id: p.id,
-    community: p.sub_name ?? "general",
-    author: `u/${p.author_username ?? "unknown"}`,
-    createdAt: formatDate(p.created_at),
-    votes: p.score ?? 0,
-    _userVote: p._userVote ?? 0,
-    title: p.title,
-    description: p.content ?? "",
-    tags: p.tags ?? [],
-    comments: p.comment_count ?? 0,
-    saved: false,
-  };
-}
-
-function formatDate(iso) {
-  if (!iso) return "";
-  try {
-    const d = new Date(iso);
-    const diff = Date.now() - d.getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
-  } catch {
-    return iso;
-  }
 }

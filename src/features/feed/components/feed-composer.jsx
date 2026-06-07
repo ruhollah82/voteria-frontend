@@ -1,41 +1,94 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Image, Link2, Plus, X } from "lucide-react";
+import { getResponseData, spacesAPI } from "@/services/api";
 import { useAuthStore } from "@/store/authStore";
 import { usePostsStore } from "@/store/postsStore";
 
-// Hardcoded default sub ID — update to match your backend's first space ID
-const DEFAULT_SUB_ID = 1;
-
-export function FeedComposer() {
+export function FeedComposer({ sortBy = "" }) {
   const { token, user } = useAuthStore();
   const { createPost } = usePostsStore();
   const navigate = useNavigate();
 
   const [open, setOpen] = useState(false);
+  const [spaces, setSpaces] = useState([]);
+  const [selectedSpaceId, setSelectedSpaceId] = useState("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const [spacesLoading, setSpacesLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!open || spaces.length > 0 || spacesLoading) return;
+
+    let cancelled = false;
+
+    async function loadSpaces() {
+      setSpacesLoading(true);
+      setError(null);
+      try {
+        const { data } = await spacesAPI.getAll(1);
+        const incoming = getResponseData(data, []).map(normaliseSpace);
+        if (cancelled) return;
+
+        setSpaces(incoming);
+        setSelectedSpaceId((current) => current || String(incoming[0]?.id ?? ""));
+        if (incoming.length === 0) {
+          setError("Create a space first, then you can post to it.");
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(getErrorMessage(err, "Failed to load spaces"));
+        }
+      } finally {
+        if (!cancelled) setSpacesLoading(false);
+      }
+    }
+
+    loadSpaces();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, spaces.length, spacesLoading]);
 
   const handleOpen = () => {
     if (!token) {
       navigate("/login");
       return;
     }
+    setError(null);
     setOpen(true);
   };
 
   const handleSubmit = async () => {
     if (!title.trim() || !content.trim()) return;
+    if (!selectedSpaceId) {
+      setError("Choose a space before posting.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    const result = await createPost(DEFAULT_SUB_ID, title.trim(), content.trim());
+    const result = await createPost(
+      selectedSpaceId,
+      title.trim(),
+      content.trim(),
+      sortBy,
+    );
     setLoading(false);
     if (result.success) {
       setOpen(false);
@@ -102,6 +155,26 @@ export function FeedComposer() {
 
               {/* Fields */}
               <div className="space-y-3">
+                <Select
+                  value={selectedSpaceId}
+                  onValueChange={setSelectedSpaceId}
+                  disabled={spacesLoading || spaces.length === 0}
+                >
+                  <SelectTrigger className="h-9 w-full">
+                    <SelectValue
+                      placeholder={
+                        spacesLoading ? "Loading spaces..." : "Choose a space"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {spaces.map((space) => (
+                      <SelectItem key={space.id} value={String(space.id)}>
+                        v/{space.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Input
                   placeholder="Title"
                   value={title}
@@ -140,7 +213,13 @@ export function FeedComposer() {
                   <Button
                     size="sm"
                     onClick={handleSubmit}
-                    disabled={loading || !title.trim() || !content.trim()}
+                    disabled={
+                      loading ||
+                      spacesLoading ||
+                      !selectedSpaceId ||
+                      !title.trim() ||
+                      !content.trim()
+                    }
                   >
                     {loading ? "Posting…" : "Post"}
                   </Button>
@@ -151,5 +230,23 @@ export function FeedComposer() {
         </div>
       )}
     </>
+  );
+}
+
+function normaliseSpace(space) {
+  return {
+    id: space.id ?? space.ID,
+    title: space.title ?? space.Title ?? "space",
+    description: space.description ?? space.Description ?? "",
+  };
+}
+
+function getErrorMessage(err, fallback) {
+  const errors = err.response?.data?.errors;
+  return (
+    errors?.non_field ||
+    Object.values(errors ?? {}).filter(Boolean).join(", ") ||
+    err.message ||
+    fallback
   );
 }

@@ -122,8 +122,10 @@ export const postsAPI = {
 // ─── Comments ────────────────────────────────────────────────────────────────
 export const commentsAPI = {
   // Backend returns flat list; parent_id=0 means top-level
-  getAll: (postId, page = 1, order_by = "") =>
-    api.get(`/posts/${postId}/comments`, { params: { page, order_by } }),
+  getAll: (postId, page = 1, sortBy = "") =>
+    api.get(`/posts/${postId}/comments`, {
+      params: { page, order_by: sortBy },
+    }),
   getById: (commentId) => api.get(`/comments/${commentId}`),
   create: (postId, content, parent_id = 0) =>
     api.post(`/posts/${postId}/comments`, { content, parent_id }),
@@ -142,19 +144,84 @@ export function buildCommentTree(flatComments) {
   const map = {};
   const roots = [];
 
-  flatComments.forEach((c) => {
-    map[c.id] = { ...c, children: [] };
+  flatComments.map(normaliseComment).forEach((c) => {
+    map[c.id] = c;
   });
 
-  flatComments.forEach((c) => {
+  Object.values(map).forEach((c) => {
     if (c.parent_id && map[c.parent_id]) {
-      map[c.parent_id].children.push(map[c.id]);
+      map[c.parent_id].children.push(c);
     } else {
-      roots.push(map[c.id]);
+      roots.push(c);
     }
   });
 
   return roots;
+}
+
+export function getResponseData(payload, fallback = null) {
+  return payload?.data ?? fallback;
+}
+
+export function normalisePost(post) {
+  if (!post) return null;
+
+  return {
+    ...post,
+    community: post.sub_name ?? post.community ?? "general",
+    author: post.author ?? `u/${post.author_username ?? "unknown"}`,
+    createdAt: post.createdAt ?? formatRelativeDate(post.created_at),
+    votes: post.votes ?? post.score ?? 0,
+    score: post.score ?? post.votes ?? 0,
+    _userVote: post._userVote ?? 0,
+    description: post.description ?? post.content ?? "",
+    comments: post.comments ?? post.comment_count ?? 0,
+    tags: post.tags ?? [],
+    saved: post.saved ?? false,
+  };
+}
+
+export function normaliseComment(comment) {
+  if (!comment) return null;
+
+  return {
+    ...comment,
+    parent_id: comment.parent_id ?? comment.parentId ?? 0,
+    author: comment.author_username
+      ? `u/${comment.author_username}`
+      : (comment.author ?? "u/??"),
+    body: comment.body ?? comment.content ?? "",
+    content: comment.content ?? comment.body ?? "",
+    votes: comment.votes ?? comment.score ?? 0,
+    score: comment.score ?? comment.votes ?? 0,
+    userVote: comment.userVote ?? comment._userVote ?? 0,
+    createdAt: comment.createdAt ?? formatRelativeDate(comment.created_at),
+    created_at: comment.created_at,
+    edited: comment.edited ?? false,
+    collapsed: comment.collapsed ?? false,
+    deleted: comment.deleted ?? false,
+    children: (comment.children ?? []).map(normaliseComment).filter(Boolean),
+  };
+}
+
+export function formatRelativeDate(value) {
+  if (!value) return "";
+  try {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+
+    const diff = Math.max(0, Date.now() - date.getTime());
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+
+    return `${Math.floor(hours / 24)}d ago`;
+  } catch {
+    return value;
+  }
 }
 
 export default api;

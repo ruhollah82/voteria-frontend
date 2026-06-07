@@ -1,10 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ArrowUp, ArrowDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/authStore";
 import { useCommentStore } from "@/store/commentStore";
 
 export function CommentVoter({ postId, commentId, votes, userVote }) {
   const vote = useCommentStore((s) => s.vote);
+  const token = useAuthStore((s) => s.token);
+  const navigate = useNavigate();
+
+  const handleVote = (direction) => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    vote(postId, commentId, direction);
+  };
 
   return (
     <div className="flex items-center gap-0.5">
@@ -12,7 +24,7 @@ export function CommentVoter({ postId, commentId, votes, userVote }) {
         size="icon-xs"
         variant="ghost"
         aria-label="Upvote"
-        onClick={() => vote(postId, commentId, 1)}
+        onClick={() => handleVote(1)}
         className={cn(
           "h-6 w-6 rounded",
           userVote === 1 && "text-primary hover:text-primary",
@@ -33,7 +45,7 @@ export function CommentVoter({ postId, commentId, votes, userVote }) {
         size="icon-xs"
         variant="ghost"
         aria-label="Downvote"
-        onClick={() => vote(postId, commentId, -1)}
+        onClick={() => handleVote(-1)}
         className={cn(
           "h-6 w-6 rounded",
           userVote === -1 && "text-destructive hover:text-destructive",

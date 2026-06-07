@@ -1,5 +1,10 @@
 import { create } from "zustand";
-import { commentsAPI, buildCommentTree } from "../services/api";
+import {
+  buildCommentTree,
+  commentsAPI,
+  getResponseData,
+  normaliseComment,
+} from "../services/api";
 
 let _nextId = 9000;
 const tempId = () => `temp-${_nextId++}`;
@@ -17,7 +22,7 @@ export const useCommentStore = create((set, get) => ({
     set({ loadingPostId: postId, error: null });
     try {
       const { data } = await commentsAPI.getAll(postId, 1);
-      const flat = data.data ?? [];
+      const flat = getResponseData(data, []);
       const tree = buildCommentTree(flat);
       set((s) => ({
         commentsByPostId: { ...s.commentsByPostId, [postId]: tree },
@@ -31,20 +36,18 @@ export const useCommentStore = create((set, get) => ({
   // ── Add Reply ──────────────────────────────────────────────────────────────
   addReply: async (postId, parentId, body, author = "u/you") => {
     const tid = tempId();
-    const optimistic = {
+    const optimistic = normaliseComment({
       id: tid,
       parent_id: parentId || 0,
       author: author,
-      body, // display field — mirrors existing component prop
-      content: body, // backend field
+      body,
+      content: body,
       votes: 1,
       score: 1,
       userVote: 1,
       createdAt: "just now",
       created_at: "just now",
-      collapsed: false,
-      children: [],
-    };
+    });
 
     set((s) => ({
       commentsByPostId: {
@@ -58,48 +61,64 @@ export const useCommentStore = create((set, get) => ({
     }));
 
     try {
-      const { data } = await commentsAPI.create(postId, body, parentId || 0);
-      // Replace temp node with real data from server
-      const real = normaliseComment(data.data ?? data);
+      await commentsAPI.create(postId, body, parentId || 0);
+      await get().refreshComments(postId);
+      return { success: true };
+    } catch (err) {
       set((s) => ({
         commentsByPostId: {
           ...s.commentsByPostId,
-          [postId]: replaceById(s.commentsByPostId[postId], tid, real),
+          [postId]: removeById(s.commentsByPostId[postId] ?? [], tid),
         },
+        error: getErrorMessage(err, "Failed to add comment"),
       }));
-    } catch {
-      // Keep optimistic on error — user sees their comment
+      return {
+        success: false,
+        error: getErrorMessage(err, "Failed to add comment"),
+      };
     }
   },
 
   // ── Vote ───────────────────────────────────────────────────────────────────
   vote: (postId, commentId, dir) => {
+    const node = findById(get().commentsByPostId[postId] ?? [], commentId);
+    const prev = node?.userVote ?? 0;
+    const next = prev === dir ? 0 : dir;
+
     set((s) => ({
       commentsByPostId: {
         ...s.commentsByPostId,
         [postId]: updateById(s.commentsByPostId[postId], commentId, (c) => {
-          const prev = c.userVote ?? 0;
-          const next = prev === dir ? 0 : dir;
           return {
             ...c,
             userVote: next,
             votes: (c.votes ?? c.score ?? 0) - prev + next,
+            score: (c.score ?? c.votes ?? 0) - prev + next,
           };
         }),
       },
     }));
 
-    // Fire & forget API call
-    const node = findById(get().commentsByPostId[postId] ?? [], commentId);
-    const prev = node?.userVote ?? 0;
-    const next = prev === dir ? 0 : dir;
+    const rollback = () => {
+      set((s) => ({
+        commentsByPostId: {
+          ...s.commentsByPostId,
+          [postId]: updateById(s.commentsByPostId[postId], commentId, (c) => ({
+            ...c,
+            userVote: prev,
+            votes: (c.votes ?? c.score ?? 0) - next + prev,
+            score: (c.score ?? c.votes ?? 0) - next + prev,
+          })),
+        },
+      }));
+    };
 
     if (next === 0) {
-      commentsAPI.deleteVote(commentId).catch(() => {});
+      commentsAPI.deleteVote(commentId).catch(rollback);
     } else if (next === 1) {
-      commentsAPI.upvote(commentId).catch(() => {});
+      commentsAPI.upvote(commentId).catch(rollback);
     } else {
-      commentsAPI.downvote(commentId).catch(() => {});
+      commentsAPI.downvote(commentId).catch(rollback);
     }
   },
 
@@ -171,27 +190,6 @@ export const useCommentStore = create((set, get) => ({
 
 // ─── Tree Helpers ──────────────────────────────────────────────────────────────
 
-function normaliseComment(raw) {
-  return {
-    id: raw.id,
-    parent_id: raw.parent_id ?? 0,
-    author: raw.author_username
-      ? `u/${raw.author_username}`
-      : (raw.author ?? "u/??"),
-    body: raw.content ?? raw.body ?? "",
-    content: raw.content ?? raw.body ?? "",
-    votes: raw.score ?? raw.votes ?? 0,
-    score: raw.score ?? raw.votes ?? 0,
-    userVote: 0,
-    createdAt: raw.created_at ?? raw.createdAt ?? "just now",
-    created_at: raw.created_at ?? "just now",
-    edited: false,
-    collapsed: false,
-    deleted: false,
-    children: [],
-  };
-}
-
 function insertReply(list, parentId, node) {
   if (!parentId) return [...list, node];
   return list.map((c) =>
@@ -202,6 +200,7 @@ function insertReply(list, parentId, node) {
 }
 
 function updateById(list, id, fn) {
+  if (!Array.isArray(list)) return [];
   return list.map((c) =>
     String(c.id) === String(id)
       ? fn(c)
@@ -209,11 +208,21 @@ function updateById(list, id, fn) {
   );
 }
 
-function replaceById(list, oldId, next) {
-  return list.map((c) =>
-    String(c.id) === String(oldId)
-      ? { ...next, children: c.children ?? [] }
-      : { ...c, children: replaceById(c.children ?? [], oldId, next) },
+function removeById(list, id) {
+  if (!Array.isArray(list)) return [];
+  return list
+    .filter((c) => String(c.id) !== String(id))
+    .map((c) => ({ ...c, children: removeById(c.children ?? [], id) }));
+}
+
+function getErrorMessage(err, fallback) {
+  const errors = err.response?.data?.errors;
+  return (
+    errors?.non_field ||
+    errors?.content ||
+    Object.values(errors ?? {}).filter(Boolean).join(", ") ||
+    err.message ||
+    fallback
   );
 }
 

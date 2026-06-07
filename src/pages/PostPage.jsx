@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,18 +8,27 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowUp, ArrowDown, Bookmark, Share2, ArrowLeft } from "lucide-react";
 import { CommentThread } from "@/features/comments";
+import { useAuthStore } from "@/store/authStore";
 import { usePostsStore } from "@/store/postsStore";
 import { cn } from "@/lib/utils";
 
 export default function PostPage() {
   const { postId } = useParams();
   const { currentPost, loading, error, fetchPost, vote } = usePostsStore();
+  const token = useAuthStore((s) => s.token);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPost(postId);
-  }, [postId]);
+  }, [fetchPost, postId]);
 
-  const handleVote = (dir) => vote(postId, dir);
+  const handleVote = (dir) => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    vote(postId, dir);
+  };
 
   if (loading && !currentPost) {
     return (
@@ -56,11 +65,11 @@ export default function PostPage() {
   if (!currentPost) return null;
 
   const userVote = currentPost._userVote ?? 0;
-  const community = currentPost.sub_name ?? "general";
-  const author = `u/${currentPost.author_username ?? "unknown"}`;
-  const score = currentPost.score ?? 0;
+  const community = currentPost.community ?? "general";
+  const author = currentPost.author ?? "u/unknown";
+  const score = currentPost.votes ?? currentPost.score ?? 0;
   const tags = currentPost.tags ?? [];
-  const createdAt = formatDate(currentPost.created_at);
+  const createdAt = currentPost.createdAt;
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
@@ -151,19 +160,4 @@ export default function PostPage() {
       </Card>
     </div>
   );
-}
-
-function formatDate(iso) {
-  if (!iso) return "";
-  try {
-    const d = new Date(iso);
-    const diff = Date.now() - d.getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
-  } catch {
-    return iso;
-  }
 }

@@ -9,10 +9,11 @@ export function CommentThread({ postId }) {
   const fetchComments = useCommentStore((s) => s.fetchComments);
   const comments = useCommentStore((s) => s.commentsByPostId[postId]);
   const loading = useCommentStore((s) => s.loadingPostId === postId);
+  const error = useCommentStore((s) => s.error);
 
   useEffect(() => {
     fetchComments(postId);
-  }, [postId]);
+  }, [fetchComments, postId]);
 
   const commentList = Array.isArray(comments) ? comments : [];
   const totalCount = countAll(commentList);
@@ -30,6 +31,12 @@ export function CommentThread({ postId }) {
       <ReplyComposer postId={postId} parentId={null} />
 
       <Separator className="my-4" />
+
+      {error && (
+        <p className="mb-4 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {error}
+        </p>
+      )}
 
       {loading && (
         <div className="space-y-4">

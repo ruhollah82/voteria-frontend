@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CommentVoter } from "./CommentVoter";
 import { ReplyComposer } from "./ReplyComposer";
+import { useAuthStore } from "@/store/authStore";
 import { useCommentStore } from "@/store/commentStore";
 
 const MAX_DEPTH = 6;
@@ -31,8 +32,10 @@ export function CommentItem({ comment, postId, depth = 0 }) {
   const toggleCollapse = useCommentStore((s) => s.toggleCollapse);
   const deleteComment = useCommentStore((s) => s.deleteComment);
   const editComment = useCommentStore((s) => s.editComment);
+  const currentUsername = useAuthStore((s) => s.user?.username);
 
-  const isCurrentUser = author === "u/you" || author === "u/voterian";
+  const author = comment.author ?? "u/??";
+  const isCurrentUser = author === `u/${currentUsername}`;
 
   const handleEdit = async () => {
     if (!editBody.trim() || editBody === comment.body) {
@@ -43,7 +46,6 @@ export function CommentItem({ comment, postId, depth = 0 }) {
     setEditing(false);
   };
 
-  const author = comment.author ?? "u/??";
   const initials = author.startsWith("u/")
     ? author.slice(2, 4).toUpperCase()
     : author.slice(0, 2).toUpperCase();
