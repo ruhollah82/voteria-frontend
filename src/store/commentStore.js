@@ -1,47 +1,51 @@
 import { create } from "zustand";
-import axios from "axios";
+import { commentsAPI, buildCommentTree } from "../services/api";
 
-let _nextId = 1000;
+let _nextId = 9000;
 const tempId = () => `temp-${_nextId++}`;
 
 export const useCommentStore = create((set, get) => ({
-  commentsByPostId: {},
+  commentsByPostId: {}, // { [postId]: Comment[] (nested tree) }
   loadingPostId: null,
   error: null,
 
+  // ── Fetch ──────────────────────────────────────────────────────────────────
   fetchComments: async (postId) => {
+    // Don't re-fetch if already loaded
+    if (get().commentsByPostId[postId]) return;
+
     set({ loadingPostId: postId, error: null });
     try {
-      const { data } = await axios.get(`/api/posts/${postId}/comments`);
+      const { data } = await commentsAPI.getAll(postId, 1);
+      const flat = data.data ?? [];
+      const tree = buildCommentTree(flat);
       set((s) => ({
-        commentsByPostId: { ...s.commentsByPostId, [postId]: data },
+        commentsByPostId: { ...s.commentsByPostId, [postId]: tree },
         loadingPostId: null,
       }));
-    } catch {
-      set((s) => ({
-        commentsByPostId: {
-          ...s.commentsByPostId,
-          [postId]: seedComments(postId),
-        },
-        loadingPostId: null,
-        error: null,
-      }));
+    } catch (err) {
+      set({ loadingPostId: null, error: err.message });
     }
   },
 
+  // ── Add Reply ──────────────────────────────────────────────────────────────
   addReply: async (postId, parentId, body, author = "u/you") => {
     const tid = tempId();
     const optimistic = {
       id: tid,
-      parentId,
-      author,
-      body,
+      parent_id: parentId || 0,
+      author: author,
+      body, // display field — mirrors existing component prop
+      content: body, // backend field
       votes: 1,
+      score: 1,
       userVote: 1,
       createdAt: "just now",
+      created_at: "just now",
       collapsed: false,
       children: [],
     };
+
     set((s) => ({
       commentsByPostId: {
         ...s.commentsByPostId,
@@ -52,22 +56,23 @@ export const useCommentStore = create((set, get) => ({
         ),
       },
     }));
+
     try {
-      const { data } = await axios.post(`/api/posts/${postId}/comments`, {
-        parentId,
-        body,
-      });
+      const { data } = await commentsAPI.create(postId, body, parentId || 0);
+      // Replace temp node with real data from server
+      const real = normaliseComment(data.data ?? data);
       set((s) => ({
         commentsByPostId: {
           ...s.commentsByPostId,
-          [postId]: replaceById(s.commentsByPostId[postId], tid, data),
+          [postId]: replaceById(s.commentsByPostId[postId], tid, real),
         },
       }));
     } catch {
-      // keep optimistic
+      // Keep optimistic on error — user sees their comment
     }
   },
 
+  // ── Vote ───────────────────────────────────────────────────────────────────
   vote: (postId, commentId, dir) => {
     set((s) => ({
       commentsByPostId: {
@@ -75,12 +80,30 @@ export const useCommentStore = create((set, get) => ({
         [postId]: updateById(s.commentsByPostId[postId], commentId, (c) => {
           const prev = c.userVote ?? 0;
           const next = prev === dir ? 0 : dir;
-          return { ...c, userVote: next, votes: c.votes - prev + next };
+          return {
+            ...c,
+            userVote: next,
+            votes: (c.votes ?? c.score ?? 0) - prev + next,
+          };
         }),
       },
     }));
+
+    // Fire & forget API call
+    const node = findById(get().commentsByPostId[postId] ?? [], commentId);
+    const prev = node?.userVote ?? 0;
+    const next = prev === dir ? 0 : dir;
+
+    if (next === 0) {
+      commentsAPI.deleteVote(commentId).catch(() => {});
+    } else if (next === 1) {
+      commentsAPI.upvote(commentId).catch(() => {});
+    } else {
+      commentsAPI.downvote(commentId).catch(() => {});
+    }
   },
 
+  // ── Collapse ───────────────────────────────────────────────────────────────
   toggleCollapse: (postId, commentId) => {
     set((s) => ({
       commentsByPostId: {
@@ -93,6 +116,7 @@ export const useCommentStore = create((set, get) => ({
     }));
   },
 
+  // ── Edit ───────────────────────────────────────────────────────────────────
   editComment: async (postId, commentId, body) => {
     set((s) => ({
       commentsByPostId: {
@@ -100,17 +124,19 @@ export const useCommentStore = create((set, get) => ({
         [postId]: updateById(s.commentsByPostId[postId], commentId, (c) => ({
           ...c,
           body,
+          content: body,
           edited: true,
         })),
       },
     }));
     try {
-      await axios.patch(`/api/posts/${postId}/comments/${commentId}`, { body });
+      await commentsAPI.update(commentId, body);
     } catch {
       // keep optimistic
     }
   },
 
+  // ── Delete ─────────────────────────────────────────────────────────────────
   deleteComment: async (postId, commentId) => {
     set((s) => ({
       commentsByPostId: {
@@ -118,23 +144,58 @@ export const useCommentStore = create((set, get) => ({
         [postId]: updateById(s.commentsByPostId[postId], commentId, (c) => ({
           ...c,
           body: "[deleted]",
+          content: "[deleted]",
           author: "[deleted]",
+          author_username: "[deleted]",
           deleted: true,
         })),
       },
     }));
     try {
-      await axios.delete(`/api/posts/${postId}/comments/${commentId}`);
-    } catch {}
+      await commentsAPI.delete(commentId);
+    } catch {
+      // Keep optimistic delete in place.
+    }
+  },
+
+  // ── Force refresh ──────────────────────────────────────────────────────────
+  refreshComments: async (postId) => {
+    set((s) => {
+      const next = { ...s.commentsByPostId };
+      delete next[postId];
+      return { commentsByPostId: next };
+    });
+    await get().fetchComments(postId);
   },
 }));
 
-// ── tree helpers ────────────────────────────────────────────────────────────
+// ─── Tree Helpers ──────────────────────────────────────────────────────────────
+
+function normaliseComment(raw) {
+  return {
+    id: raw.id,
+    parent_id: raw.parent_id ?? 0,
+    author: raw.author_username
+      ? `u/${raw.author_username}`
+      : (raw.author ?? "u/??"),
+    body: raw.content ?? raw.body ?? "",
+    content: raw.content ?? raw.body ?? "",
+    votes: raw.score ?? raw.votes ?? 0,
+    score: raw.score ?? raw.votes ?? 0,
+    userVote: 0,
+    createdAt: raw.created_at ?? raw.createdAt ?? "just now",
+    created_at: raw.created_at ?? "just now",
+    edited: false,
+    collapsed: false,
+    deleted: false,
+    children: [],
+  };
+}
 
 function insertReply(list, parentId, node) {
-  if (parentId === null) return [...list, node];
+  if (!parentId) return [...list, node];
   return list.map((c) =>
-    c.id === parentId
+    String(c.id) === String(parentId)
       ? { ...c, children: [...(c.children ?? []), node] }
       : { ...c, children: insertReply(c.children ?? [], parentId, node) },
   );
@@ -142,7 +203,7 @@ function insertReply(list, parentId, node) {
 
 function updateById(list, id, fn) {
   return list.map((c) =>
-    c.id === id
+    String(c.id) === String(id)
       ? fn(c)
       : { ...c, children: updateById(c.children ?? [], id, fn) },
   );
@@ -150,242 +211,17 @@ function updateById(list, id, fn) {
 
 function replaceById(list, oldId, next) {
   return list.map((c) =>
-    c.id === oldId
-      ? next
+    String(c.id) === String(oldId)
+      ? { ...next, children: c.children ?? [] }
       : { ...c, children: replaceById(c.children ?? [], oldId, next) },
   );
 }
 
-// ── seed data ───────────────────────────────────────────────────────────────
-
-function seedComments(postId) {
-  if (postId === "4") {
-    return [
-      {
-        id: "4-1",
-        parentId: null,
-        author: "u/cssmaster",
-        body: "The recursive CommentItem approach is clean. Did you hit any performance issues with very deep trees?",
-        votes: 87,
-        userVote: 0,
-        createdAt: "55m ago",
-        collapsed: false,
-        children: [
-          {
-            id: "4-1-1",
-            parentId: "4-1",
-            author: "u/pixelstack",
-            body: "Not yet — trees rarely exceed 6 levels in practice. We cap depth at MAX_DEPTH and flatten beyond that. React handles the recursion fine at this scale.",
-            votes: 42,
-            userVote: 0,
-            createdAt: "50m ago",
-            collapsed: false,
-            children: [
-              {
-                id: "4-1-1-1",
-                parentId: "4-1-1",
-                author: "u/cssmaster",
-                body: "Makes sense. What does flattening look like — do you render a 'continue thread' link?",
-                votes: 19,
-                userVote: 0,
-                createdAt: "45m ago",
-                collapsed: false,
-                children: [
-                  {
-                    id: "4-1-1-1-1",
-                    parentId: "4-1-1-1",
-                    author: "u/pixelstack",
-                    body: "Exactly — at MAX_DEPTH we render a button that navigates to a permalink showing just that subtree as the root. Haven't shipped it yet but the routing is already wired.",
-                    votes: 11,
-                    userVote: 0,
-                    createdAt: "40m ago",
-                    collapsed: false,
-                    children: [
-                      {
-                        id: "4-1-1-1-1-1",
-                        parentId: "4-1-1-1-1",
-                        author: "u/webwizard",
-                        body: "Reddit does the same thing. Good call copying the pattern — users already know it.",
-                        votes: 7,
-                        userVote: 0,
-                        createdAt: "35m ago",
-                        collapsed: false,
-                        children: [
-                          {
-                            id: "4-1-1-1-1-1-1",
-                            parentId: "4-1-1-1-1-1",
-                            author: "u/lurker99",
-                            body: "This is level 7 deep. Getting philosophical in here.",
-                            votes: 3,
-                            userVote: 0,
-                            createdAt: "30m ago",
-                            collapsed: false,
-                            children: [],
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            id: "4-1-2",
-            parentId: "4-1",
-            author: "u/designlover",
-            body: "The collapsing thread line is a great touch. Clicking the vertical bar feels very natural.",
-            votes: 28,
-            userVote: 0,
-            createdAt: "48m ago",
-            collapsed: false,
-            children: [
-              {
-                id: "4-1-2-1",
-                parentId: "4-1-2",
-                author: "u/modteam",
-                body: "We stole that from old Reddit. Still the best UX for dense threads.",
-                votes: 15,
-                userVote: 0,
-                createdAt: "44m ago",
-                collapsed: false,
-                children: [],
-              },
-            ],
-          },
-        ],
-      },
-      {
-        id: "4-2",
-        parentId: null,
-        author: "u/webwizard",
-        body: "How does optimistic voting work when two tabs are open? Do you sync via websockets or just let them diverge?",
-        votes: 54,
-        userVote: 0,
-        createdAt: "52m ago",
-        collapsed: false,
-        children: [
-          {
-            id: "4-2-1",
-            parentId: "4-2",
-            author: "u/pixelstack",
-            body: "They diverge for now — last write wins on the server. A websocket broadcast is on the roadmap but not worth the complexity at current scale.",
-            votes: 31,
-            userVote: 0,
-            createdAt: "47m ago",
-            collapsed: false,
-            children: [
-              {
-                id: "4-2-1-1",
-                parentId: "4-2-1",
-                author: "u/webwizard",
-                body: "Fair enough. Premature optimisation and all that.",
-                votes: 12,
-                userVote: 0,
-                createdAt: "43m ago",
-                collapsed: false,
-                children: [],
-              },
-            ],
-          },
-        ],
-      },
-      {
-        id: "4-3",
-        parentId: null,
-        author: "u/voterian",
-        body: "Love the write-up. One question — why Zustand over Jotai for this? Both seem like a good fit.",
-        votes: 38,
-        userVote: 1,
-        createdAt: "49m ago",
-        collapsed: false,
-        children: [
-          {
-            id: "4-3-1",
-            parentId: "4-3",
-            author: "u/pixelstack",
-            body: "Mostly familiarity. Zustand's flat store + immer-style updates maps well to tree mutations. Jotai's atom model would work too but the recursive update helpers felt more natural as plain functions.",
-            votes: 22,
-            userVote: 0,
-            createdAt: "44m ago",
-            collapsed: false,
-            children: [],
-          },
-        ],
-      },
-      {
-        id: "4-4",
-        parentId: null,
-        author: "u/lurker99",
-        body: "Can I upvote my own comments?",
-        votes: -4,
-        userVote: -1,
-        createdAt: "30m ago",
-        collapsed: true,
-        children: [
-          {
-            id: "4-4-1",
-            parentId: "4-4",
-            author: "u/modteam",
-            body: "No. And please don't try.",
-            votes: 41,
-            userVote: 0,
-            createdAt: "28m ago",
-            collapsed: false,
-            children: [],
-          },
-        ],
-      },
-    ];
+function findById(list, id) {
+  for (const c of list) {
+    if (String(c.id) === String(id)) return c;
+    const found = findById(c.children ?? [], id);
+    if (found) return found;
   }
-
-  // generic fallback for other posts
-  return [
-    {
-      id: `${postId}-1`,
-      parentId: null,
-      author: "u/pixelstack",
-      body: "Great post! The layout feels very snappy on mobile.",
-      votes: 142,
-      userVote: 0,
-      createdAt: "3h ago",
-      collapsed: false,
-      children: [
-        {
-          id: `${postId}-1-1`,
-          parentId: `${postId}-1`,
-          author: "u/cssmaster",
-          body: "Agreed. The container query approach really pays off here.",
-          votes: 57,
-          userVote: 0,
-          createdAt: "2h ago",
-          collapsed: false,
-          children: [
-            {
-              id: `${postId}-1-1-1`,
-              parentId: `${postId}-1-1`,
-              author: "u/modteam",
-              body: "We'll be writing a deep-dive on that soon — stay tuned.",
-              votes: 23,
-              userVote: 0,
-              createdAt: "1h ago",
-              collapsed: false,
-              children: [],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: `${postId}-2`,
-      parentId: null,
-      author: "u/designlover",
-      body: "The color palette is clean. Which token system are you using?",
-      votes: 89,
-      userVote: 0,
-      createdAt: "5h ago",
-      collapsed: false,
-      children: [],
-    },
-  ];
+  return null;
 }

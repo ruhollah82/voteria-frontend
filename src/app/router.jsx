@@ -4,8 +4,13 @@ import HomePage from "../pages/HomePage";
 import AboutPage from "../pages/AboutPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import PostPage from "../pages/PostPage";
+import AuthPage from "../pages/AuthPage";
 
 export const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <AuthPage />,
+  },
   {
     path: "/",
     element: <RootLayout />,

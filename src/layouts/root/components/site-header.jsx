@@ -13,20 +13,19 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useTheme } from "@/app/providers/ThemeProvider";
-import { sidebarData } from "@/lib/voteria-data";
+import { useAuthStore } from "@/store/authStore";
 import {
-  BadgeCheck,
   Bell,
   ChevronsUpDown,
-  CreditCard,
   LogOut,
   Moon,
   Plus,
   Search,
   Settings,
   Sun,
+  LogIn,
 } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const pageTitles = {
   "/": "Home",
@@ -44,8 +43,8 @@ const pageTitles = {
 export function SiteHeader() {
   const { pathname } = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { user, token } = useAuthStore();
   const title = pageTitles[pathname] ?? "Voteria";
-  const user = sidebarData.user;
 
   return (
     <header className="z-40 flex h-(--header-height) w-full shrink-0 items-center border-b bg-background">
@@ -89,20 +88,33 @@ export function SiteHeader() {
           >
             <Search className="size-4" />
           </Button>
-          <Button asChild size="sm" className="hidden sm:inline-flex">
-            <Link to="/submit">
-              <Plus className="size-4" />
-              Create
-            </Link>
-          </Button>
-          <Button
-            className="hidden min-[420px]:inline-flex"
-            variant="ghost"
-            size="icon"
-            aria-label="Notifications"
-          >
-            <Bell className="size-4" />
-          </Button>
+
+          {token ? (
+            <>
+              <Button asChild size="sm" className="hidden sm:inline-flex">
+                <Link to="/submit">
+                  <Plus className="size-4" />
+                  Create
+                </Link>
+              </Button>
+              <Button
+                className="hidden min-[420px]:inline-flex"
+                variant="ghost"
+                size="icon"
+                aria-label="Notifications"
+              >
+                <Bell className="size-4" />
+              </Button>
+            </>
+          ) : (
+            <Button asChild size="sm" className="hidden sm:inline-flex">
+              <Link to="/login">
+                <LogIn className="size-4" />
+                Sign in
+              </Link>
+            </Button>
+          )}
+
           <Button
             variant="ghost"
             size="icon"
@@ -115,7 +127,18 @@ export function SiteHeader() {
               <Moon className="size-4" />
             )}
           </Button>
-          <AccountMenu user={user} />
+
+          {token ? (
+            <AccountMenu user={user} />
+          ) : (
+            <Button variant="ghost" size="icon" asChild aria-label="Sign in">
+              <Link to="/login">
+                <Avatar className="size-7 rounded-lg">
+                  <AvatarFallback className="rounded-lg">?</AvatarFallback>
+                </Avatar>
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>
@@ -123,6 +146,18 @@ export function SiteHeader() {
 }
 
 function AccountMenu({ user }) {
+  const { logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  const initials = user?.username
+    ? user.username.slice(0, 2).toUpperCase()
+    : "VT";
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -132,11 +167,10 @@ function AccountMenu({ user }) {
           aria-label="Open account menu"
         >
           <Avatar className="size-7 rounded-lg">
-            <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback className="rounded-lg">VT</AvatarFallback>
+            <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
           </Avatar>
           <span className="hidden max-w-28 truncate text-sm font-medium lg:inline">
-            {user.name}
+            {user?.username ?? "Account"}
           </span>
           <ChevronsUpDown className="hidden size-3.5 text-muted-foreground sm:block" />
         </Button>
@@ -145,23 +179,17 @@ function AccountMenu({ user }) {
         <DropdownMenuLabel className="p-0 font-normal">
           <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
             <Avatar className="size-8 rounded-lg">
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="rounded-lg">VT</AvatarFallback>
+              <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="truncate font-medium">{user.name}</p>
-              <p className="truncate text-xs text-muted-foreground">
-                {user.email}
+              <p className="truncate font-medium">
+                u/{user?.username ?? "you"}
               </p>
             </div>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <BadgeCheck />
-            Account
-          </DropdownMenuItem>
           <DropdownMenuItem>
             <Settings />
             Settings
@@ -170,13 +198,9 @@ function AccountMenu({ user }) {
             <Bell />
             Notifications
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <CreditCard />
-            Billing
-          </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>
           <LogOut />
           Log out
         </DropdownMenuItem>
