@@ -10,7 +10,12 @@ export function getStoredAccessToken() {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
-export function storeAuthSession({ accessToken, refreshToken, expiresAt, user }) {
+export function storeAuthSession({
+  accessToken,
+  refreshToken,
+  expiresAt,
+  user,
+}) {
   localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
 
   if (refreshToken) {

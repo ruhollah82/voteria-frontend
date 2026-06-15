@@ -20,7 +20,12 @@ import { useSpacesStore } from "@/store/spacesStore";
 export function FeedComposer({ sortBy = "" }) {
   const { token, user } = useAuthStore();
   const { createPost } = usePostsStore();
-  const { spaces, fetchSpaces, loading: spacesLoading, error: spacesError } = useSpacesStore();
+  const {
+    spaces,
+    fetchSpaces,
+    loading: spacesLoading,
+    error: spacesError,
+  } = useSpacesStore();
   const navigate = useNavigate();
 
   const [open, setOpen] = useState(false);
@@ -204,7 +209,9 @@ export function FeedComposer({ sortBy = "" }) {
 
               {/* Actions */}
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">⌘↵ to post</span>
+                <span className="text-xs text-muted-foreground">
+                  ⌘↵ to post
+                </span>
                 <div className="flex gap-2">
                   <Button
                     size="sm"
@@ -248,7 +255,9 @@ function getErrorMessage(err, fallback) {
   const errors = err.response?.data?.errors;
   return (
     errors?.non_field ||
-    Object.values(errors ?? {}).filter(Boolean).join(", ") ||
+    Object.values(errors ?? {})
+      .filter(Boolean)
+      .join(", ") ||
     err.message ||
     fallback
   );

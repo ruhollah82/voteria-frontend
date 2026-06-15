@@ -17,11 +17,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { Plus, FolderIcon } from "lucide-react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarRail,
-} from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarRail } from "@/components/ui/sidebar";
 
 function mapSpaceToProject(space) {
   return {
@@ -66,7 +62,8 @@ export function AppSidebar(props) {
     }
   }, [createError]);
 
-  const projects = spaces.length > 0 ? spaces.map(mapSpaceToProject) : sidebarData.projects;
+  const projects =
+    spaces.length > 0 ? spaces.map(mapSpaceToProject) : sidebarData.projects;
 
   const handleCreateSpace = async () => {
     if (!title.trim() || !description.trim()) {
@@ -105,7 +102,9 @@ export function AppSidebar(props) {
               </SheetHeader>
               <div className="space-y-4 px-4">
                 <div>
-                  <label className="text-sm font-medium text-foreground">Title</label>
+                  <label className="text-sm font-medium text-foreground">
+                    Title
+                  </label>
                   <Input
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
@@ -114,7 +113,9 @@ export function AppSidebar(props) {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-foreground">Description</label>
+                  <label className="text-sm font-medium text-foreground">
+                    Description
+                  </label>
                   <Textarea
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}

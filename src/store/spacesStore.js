@@ -18,7 +18,9 @@ function getErrorMessage(err, fallback) {
     errors?.non_field ||
     errors?.title ||
     errors?.description ||
-    Object.values(errors ?? {}).filter(Boolean).join(", ") ||
+    Object.values(errors ?? {})
+      .filter(Boolean)
+      .join(", ") ||
     err.message ||
     fallback
   );
@@ -54,7 +56,10 @@ export const useSpacesStore = create((set, get) => ({
         hasMore: incoming.length > 0,
       });
     } catch (err) {
-      set({ loading: false, error: getErrorMessage(err, "Failed to load spaces") });
+      set({
+        loading: false,
+        error: getErrorMessage(err, "Failed to load spaces"),
+      });
     }
   },
 

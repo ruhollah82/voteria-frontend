@@ -58,7 +58,7 @@ export default function AuthPage() {
                   "flex-1 rounded-md py-1.5 text-sm font-medium transition-colors capitalize",
                   mode === m
                     ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {m === "login" ? "Sign in" : "Sign up"}
@@ -108,8 +108,8 @@ export default function AuthPage() {
               {loading
                 ? "Please wait…"
                 : mode === "login"
-                ? "Sign in"
-                : "Create account"}
+                  ? "Sign in"
+                  : "Create account"}
             </Button>
           </form>
         </div>

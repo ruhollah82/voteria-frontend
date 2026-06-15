@@ -60,12 +60,17 @@ function buildSessionFromResponse(response, fallbackUsername) {
   const payload = response?.data ?? response;
   const body = payload?.tokens ?? payload?.data?.tokens ?? payload;
   const accessToken =
-    body?.access ?? body?.access_token ?? payload?.access_token ?? payload?.data?.access_token;
+    body?.access ??
+    body?.access_token ??
+    payload?.access_token ??
+    payload?.data?.access_token;
   const refreshToken =
     body?.refresh ?? body?.refresh_token ?? payload?.refresh_token ?? null;
 
   if (!accessToken) {
-    throw new Error("Authentication succeeded but no access token was returned");
+    throw new Error(
+      "Authentication succeeded but no access token was returned",
+    );
   }
 
   const decoded = decodeJwtPayload(accessToken) ?? {};
@@ -78,8 +83,8 @@ function buildSessionFromResponse(response, fallbackUsername) {
   const expiresAt = decoded.exp
     ? decoded.exp * 1000
     : accessExpireSeconds
-    ? Date.now() + accessExpireSeconds * 1000
-    : null;
+      ? Date.now() + accessExpireSeconds * 1000
+      : null;
   const user = {
     id: decoded.userId ?? decoded.id ?? null,
     username: decoded.username ?? fallbackUsername,
