@@ -220,7 +220,9 @@ function getErrorMessage(err, fallback) {
   return (
     errors?.non_field ||
     errors?.content ||
-    Object.values(errors ?? {}).filter(Boolean).join(", ") ||
+    Object.values(errors ?? {})
+      .filter(Boolean)
+      .join(", ") ||
     err.message ||
     fallback
   );

@@ -49,6 +49,21 @@ function redirectToLogin() {
   }
 }
 
+function getAppStatus(response) {
+  const status = response?.data?.status;
+  return typeof status === "number" ? status : 0;
+}
+
+function buildAppError(response) {
+  const payload = response?.data;
+  const errors = payload?.errors;
+  const message =
+    errors?.non_field || payload?.msg || payload?.message || "Request failed";
+  const error = new Error(message);
+  error.response = response;
+  return error;
+}
+
 const api = axios.create({
   baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
@@ -64,15 +79,13 @@ api.interceptors.request.use((config) => {
 // The backend wraps application status in the JSON body while returning HTTP 200.
 api.interceptors.response.use(
   (res) => {
-    const appStatus = Number(res.data?.status);
+    const appStatus = getAppStatus(res);
     if (appStatus >= 400) {
       if (shouldClearAuth(appStatus, res.data?.code)) {
         clearAuthSession();
         redirectToLogin();
       }
-      const error = new Error(res.data?.errors?.non_field || "Request failed");
-      error.response = { ...res, status: appStatus };
-      return Promise.reject(error);
+      return Promise.reject(buildAppError(res));
     }
     return res;
   },
@@ -98,7 +111,8 @@ export const spacesAPI = {
   getAll: (page = 1, sort_by = "") =>
     api.get("/spaces", { params: { page, sort_by } }),
   getById: (spaceId) => api.get(`/spaces/${spaceId}`),
-  create: (title, description) => api.post("/spaces", { title, description }),
+  create: (title, description, username) =>
+    api.post("/spaces", { title, description, username }),
   update: (spaceId, title, description) =>
     api.put(`/spaces/${spaceId}`, { title, description }),
   delete: (spaceId) => api.delete(`/spaces/${spaceId}`),
@@ -110,7 +124,7 @@ export const postsAPI = {
     api.get("/posts", { params: { page, sort_by } }),
   getById: (postId) => api.get(`/posts/${postId}`),
   create: (subId, title, content) =>
-    api.post(`/spaces/${subId}/post`, { title, content }),
+    api.post(`/spaces/${subId}/posts`, { title, content }),
   update: (postId, title, content) =>
     api.put(`/posts/${postId}`, { title, content }),
   delete: (postId) => api.delete(`/posts/${postId}`),

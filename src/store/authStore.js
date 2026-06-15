@@ -38,38 +38,51 @@ function decodeJwtPayload(token) {
 }
 
 function getErrorMessage(err, fallback) {
-  const errors = err.response?.data?.errors;
-  if (!errors) return fallback;
+  const response = err.response?.data || err.data;
+  const errors = response?.errors;
+  const message = response?.msg || response?.message;
 
-  return (
-    errors.non_field ||
-    errors.username ||
-    errors.password ||
-    Object.values(errors).filter(Boolean).join(", ") ||
-    fallback
-  );
+  if (errors) {
+    return (
+      errors.non_field ||
+      errors.username ||
+      errors.password ||
+      Object.values(errors).filter(Boolean).join(", ") ||
+      message ||
+      fallback
+    );
+  }
+
+  return message || fallback;
 }
 
-function buildSessionFromResponse(data, fallbackUsername) {
-  const tokens = data?.tokens ?? data?.data?.tokens ?? {};
-  const accessToken = tokens.access ?? tokens.access_token ?? data?.access_token;
+function buildSessionFromResponse(response, fallbackUsername) {
+  const payload = response?.data ?? response;
+  const body = payload?.tokens ?? payload?.data?.tokens ?? payload;
+  const accessToken =
+    body?.access ?? body?.access_token ?? payload?.access_token ?? payload?.data?.access_token;
   const refreshToken =
-    tokens.refresh ?? tokens.refresh_token ?? data?.refresh_token ?? null;
+    body?.refresh ?? body?.refresh_token ?? payload?.refresh_token ?? null;
 
   if (!accessToken) {
     throw new Error("Authentication succeeded but no access token was returned");
   }
 
-  const payload = decodeJwtPayload(accessToken) ?? {};
-  const accessExpireSeconds = Number(tokens.accessExpireSeconds);
-  const expiresAt = payload.exp
-    ? payload.exp * 1000
+  const decoded = decodeJwtPayload(accessToken) ?? {};
+  const accessExpireSeconds = Number(
+    body?.accessExpireSeconds ??
+      body?.access_expire_seconds ??
+      payload?.accessExpireSeconds ??
+      payload?.access_expire_seconds,
+  );
+  const expiresAt = decoded.exp
+    ? decoded.exp * 1000
     : accessExpireSeconds
     ? Date.now() + accessExpireSeconds * 1000
     : null;
   const user = {
-    id: payload.userId ?? payload.id ?? null,
-    username: payload.username ?? fallbackUsername,
+    id: decoded.userId ?? decoded.id ?? null,
+    username: decoded.username ?? fallbackUsername,
   };
 
   storeAuthSession({ accessToken, refreshToken, expiresAt, user });
@@ -117,6 +130,8 @@ export const useAuthStore = create((set) => ({
       return { success: false, error: msg };
     }
   },
+
+  clearError: () => set({ error: null }),
 
   logout: () => {
     clearAuthSession();

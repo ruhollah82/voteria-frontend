@@ -13,22 +13,21 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Image, Link2, Plus, X } from "lucide-react";
-import { getResponseData, spacesAPI } from "@/services/api";
 import { useAuthStore } from "@/store/authStore";
 import { usePostsStore } from "@/store/postsStore";
+import { useSpacesStore } from "@/store/spacesStore";
 
 export function FeedComposer({ sortBy = "" }) {
   const { token, user } = useAuthStore();
   const { createPost } = usePostsStore();
+  const { spaces, fetchSpaces, loading: spacesLoading, error: spacesError } = useSpacesStore();
   const navigate = useNavigate();
 
   const [open, setOpen] = useState(false);
-  const [spaces, setSpaces] = useState([]);
   const [selectedSpaceId, setSelectedSpaceId] = useState("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
-  const [spacesLoading, setSpacesLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -37,24 +36,13 @@ export function FeedComposer({ sortBy = "" }) {
     let cancelled = false;
 
     async function loadSpaces() {
-      setSpacesLoading(true);
       setError(null);
       try {
-        const { data } = await spacesAPI.getAll(1);
-        const incoming = getResponseData(data, []).map(normaliseSpace);
-        if (cancelled) return;
-
-        setSpaces(incoming);
-        setSelectedSpaceId((current) => current || String(incoming[0]?.id ?? ""));
-        if (incoming.length === 0) {
-          setError("Create a space first, then you can post to it.");
-        }
+        await fetchSpaces(1);
       } catch (err) {
         if (!cancelled) {
           setError(getErrorMessage(err, "Failed to load spaces"));
         }
-      } finally {
-        if (!cancelled) setSpacesLoading(false);
       }
     }
 
@@ -63,7 +51,22 @@ export function FeedComposer({ sortBy = "" }) {
     return () => {
       cancelled = true;
     };
-  }, [open, spaces.length, spacesLoading]);
+  }, [open, spaces.length, spacesLoading, fetchSpaces]);
+
+  useEffect(() => {
+    if (!selectedSpaceId && spaces.length > 0) {
+      setSelectedSpaceId(String(spaces[0].id));
+    }
+    if (spaces.length === 0 && open) {
+      setError("Create a space first, then you can post to it.");
+    }
+  }, [spaces, selectedSpaceId, open]);
+
+  useEffect(() => {
+    if (spacesError) {
+      setError(spacesError);
+    }
+  }, [spacesError]);
 
   const handleOpen = () => {
     if (!token) {

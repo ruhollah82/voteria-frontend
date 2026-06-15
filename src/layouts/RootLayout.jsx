@@ -16,7 +16,7 @@ export default function RootLayout() {
       <div className="flex min-h-0 w-full flex-1">
         <AppSidebar />
         <SidebarInset className="min-h-0 min-w-0">
-          <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-muted/30">
+          <main className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-muted/30 w-full">
             <div className="@container/main mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col px-3 py-3 sm:px-4 md:px-6 md:py-5">
               <Outlet />
             </div>

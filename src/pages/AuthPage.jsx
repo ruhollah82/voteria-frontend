@@ -10,7 +10,7 @@ export default function AuthPage() {
   const [mode, setMode] = useState("login"); // "login" | "register"
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { login, register, loading, error, token } = useAuthStore();
+  const { login, register, loading, error, token, clearError } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,7 +50,10 @@ export default function AuthPage() {
               <button
                 key={m}
                 type="button"
-                onClick={() => setMode(m)}
+                onClick={() => {
+                  clearError();
+                  setMode(m);
+                }}
                 className={cn(
                   "flex-1 rounded-md py-1.5 text-sm font-medium transition-colors capitalize",
                   mode === m
