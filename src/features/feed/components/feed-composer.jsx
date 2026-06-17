@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,99 +11,27 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Image, Link2, Plus, X } from "lucide-react";
-import { useAuthStore } from "@/store/authStore";
-import { usePostsStore } from "@/store/postsStore";
-import { useSpacesStore } from "@/store/spacesStore";
+import { useFeedComposer } from "../hooks/useFeedComposer";
 
 export function FeedComposer({ sortBy = "" }) {
-  const { token, user } = useAuthStore();
-  const { createPost } = usePostsStore();
   const {
+    token,
+    user,
+    open,
+    setOpen,
+    selectedSpaceId,
+    setSelectedSpaceId,
+    title,
+    setTitle,
+    content,
+    setContent,
+    loading,
+    error,
     spaces,
-    fetchSpaces,
-    loading: spacesLoading,
-    error: spacesError,
-  } = useSpacesStore();
-  const navigate = useNavigate();
-
-  const [open, setOpen] = useState(false);
-  const [selectedSpaceId, setSelectedSpaceId] = useState("");
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (!open || spaces.length > 0 || spacesLoading) return;
-
-    let cancelled = false;
-
-    async function loadSpaces() {
-      setError(null);
-      try {
-        await fetchSpaces(1);
-      } catch (err) {
-        if (!cancelled) {
-          setError(getErrorMessage(err, "Failed to load spaces"));
-        }
-      }
-    }
-
-    loadSpaces();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, spaces.length, spacesLoading, fetchSpaces]);
-
-  useEffect(() => {
-    if (!selectedSpaceId && spaces.length > 0) {
-      setSelectedSpaceId(String(spaces[0].id));
-    }
-    if (spaces.length === 0 && open) {
-      setError("Create a space first, then you can post to it.");
-    }
-  }, [spaces, selectedSpaceId, open]);
-
-  useEffect(() => {
-    if (spacesError) {
-      setError(spacesError);
-    }
-  }, [spacesError]);
-
-  const handleOpen = () => {
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-    setError(null);
-    setOpen(true);
-  };
-
-  const handleSubmit = async () => {
-    if (!title.trim() || !content.trim()) return;
-    if (!selectedSpaceId) {
-      setError("Choose a space before posting.");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    const result = await createPost(
-      selectedSpaceId,
-      title.trim(),
-      content.trim(),
-      sortBy,
-    );
-    setLoading(false);
-    if (result.success) {
-      setOpen(false);
-      setTitle("");
-      setContent("");
-    } else {
-      setError(result.error ?? "Something went wrong");
-    }
-  };
+    spacesLoading,
+    handleOpen,
+    handleSubmit,
+  } = useFeedComposer(sortBy);
 
   const initials = user?.username
     ? user.username.slice(0, 2).toUpperCase()
@@ -240,25 +166,5 @@ export function FeedComposer({ sortBy = "" }) {
         </div>
       )}
     </>
-  );
-}
-
-function normaliseSpace(space) {
-  return {
-    id: space.id ?? space.ID,
-    title: space.title ?? space.Title ?? "space",
-    description: space.description ?? space.Description ?? "",
-  };
-}
-
-function getErrorMessage(err, fallback) {
-  const errors = err.response?.data?.errors;
-  return (
-    errors?.non_field ||
-    Object.values(errors ?? {})
-      .filter(Boolean)
-      .join(", ") ||
-    err.message ||
-    fallback
   );
 }

@@ -1,17 +1,7 @@
 import { create } from "zustand";
-import { getResponseData, normalisePost, postsAPI } from "../services/api";
-
-function getErrorMessage(err, fallback) {
-  const errors = err.response?.data?.errors;
-  return (
-    errors?.non_field ||
-    errors?.title ||
-    errors?.content ||
-    Object.values(errors ?? {}).filter(Boolean).join(", ") ||
-    err.message ||
-    fallback
-  );
-}
+import { getResponseData, postsAPI } from "../services/api";
+import { normalisePost } from "@/lib/normalise";
+import { getErrorMessage } from "@/lib/error";
 
 export const usePostsStore = create((set, get) => ({
   posts: [],
@@ -33,7 +23,10 @@ export const usePostsStore = create((set, get) => ({
         hasMore: incoming.length > 0,
       });
     } catch (err) {
-      set({ loading: false, error: getErrorMessage(err, "Failed to load posts") });
+      set({
+        loading: false,
+        error: getErrorMessage(err, "Failed to load posts"),
+      });
     }
   },
 
@@ -41,9 +34,15 @@ export const usePostsStore = create((set, get) => ({
     set({ currentPost: null, loading: true, error: null });
     try {
       const { data } = await postsAPI.getById(postId);
-      set({ currentPost: normalisePost(getResponseData(data, null)), loading: false });
+      set({
+        currentPost: normalisePost(getResponseData(data, null)),
+        loading: false,
+      });
     } catch (err) {
-      set({ loading: false, error: getErrorMessage(err, "Failed to load post") });
+      set({
+        loading: false,
+        error: getErrorMessage(err, "Failed to load post"),
+      });
     }
   },
 
@@ -65,7 +64,7 @@ export const usePostsStore = create((set, get) => ({
       (String(get().currentPost?.id) === String(postId)
         ? get().currentPost
         : null);
-    const prev = existing?._userVote ?? 0;
+    const prev = existing?.userVote ?? 0;
     const next = prev === direction ? 0 : direction;
 
     // Optimistic update
@@ -77,6 +76,7 @@ export const usePostsStore = create((set, get) => ({
           ...p,
           score: (p.score ?? p.votes ?? 0) + delta,
           votes: (p.votes ?? p.score ?? 0) + delta,
+          userVote: toVote,
           _userVote: toVote,
         };
       });
@@ -96,7 +96,10 @@ export const usePostsStore = create((set, get) => ({
       }
     } catch {
       set((s) => ({ posts: update(s.posts, next, prev) }));
-      if (get().currentPost && String(get().currentPost.id) === String(postId)) {
+      if (
+        get().currentPost &&
+        String(get().currentPost.id) === String(postId)
+      ) {
         set((s) => ({ currentPost: update([s.currentPost], next, prev)[0] }));
       }
     }

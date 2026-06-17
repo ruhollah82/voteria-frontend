@@ -1,10 +1,11 @@
 import { create } from "zustand";
+import { commentsAPI, getResponseData } from "../services/api";
 import {
   buildCommentTree,
-  commentsAPI,
-  getResponseData,
   normaliseComment,
-} from "../services/api";
+  normalizeUsername,
+} from "@/lib/normalise";
+import { getErrorMessage } from "@/lib/error";
 
 let _nextId = 9000;
 const tempId = () => `temp-${_nextId++}`;
@@ -39,14 +40,12 @@ export const useCommentStore = create((set, get) => ({
     const optimistic = normaliseComment({
       id: tid,
       parent_id: parentId || 0,
-      author: author,
-      body,
+      author_username: normalizeUsername(author),
       content: body,
-      votes: 1,
       score: 1,
       userVote: 1,
-      createdAt: "just now",
       created_at: "just now",
+      deleted: false,
     });
 
     set((s) => ({
@@ -137,6 +136,7 @@ export const useCommentStore = create((set, get) => ({
 
   // ── Edit ───────────────────────────────────────────────────────────────────
   editComment: async (postId, commentId, body) => {
+    const previous = findById(get().commentsByPostId[postId] ?? [], commentId);
     set((s) => ({
       commentsByPostId: {
         ...s.commentsByPostId,
@@ -150,13 +150,26 @@ export const useCommentStore = create((set, get) => ({
     }));
     try {
       await commentsAPI.update(commentId, body);
-    } catch {
-      // keep optimistic
+    } catch (err) {
+      if (previous) {
+        set((s) => ({
+          commentsByPostId: {
+            ...s.commentsByPostId,
+            [postId]: updateById(
+              s.commentsByPostId[postId],
+              commentId,
+              () => previous,
+            ),
+          },
+        }));
+      }
+      set({ error: getErrorMessage(err, "Failed to update comment") });
     }
   },
 
   // ── Delete ─────────────────────────────────────────────────────────────────
   deleteComment: async (postId, commentId) => {
+    const previous = findById(get().commentsByPostId[postId] ?? [], commentId);
     set((s) => ({
       commentsByPostId: {
         ...s.commentsByPostId,
@@ -170,10 +183,26 @@ export const useCommentStore = create((set, get) => ({
         })),
       },
     }));
+
     try {
       await commentsAPI.delete(commentId);
-    } catch {
-      // Keep optimistic delete in place.
+      await get().refreshComments(postId);
+    } catch (err) {
+      if (previous) {
+        set((s) => ({
+          commentsByPostId: {
+            ...s.commentsByPostId,
+            [postId]: updateById(
+              s.commentsByPostId[postId],
+              commentId,
+              () => previous,
+            ),
+          },
+        }));
+      } else {
+        await get().refreshComments(postId);
+      }
+      set({ error: getErrorMessage(err, "Failed to delete comment") });
     }
   },
 
@@ -213,19 +242,6 @@ function removeById(list, id) {
   return list
     .filter((c) => String(c.id) !== String(id))
     .map((c) => ({ ...c, children: removeById(c.children ?? [], id) }));
-}
-
-function getErrorMessage(err, fallback) {
-  const errors = err.response?.data?.errors;
-  return (
-    errors?.non_field ||
-    errors?.content ||
-    Object.values(errors ?? {})
-      .filter(Boolean)
-      .join(", ") ||
-    err.message ||
-    fallback
-  );
 }
 
 function findById(list, id) {

@@ -21,7 +21,7 @@ export function FeedPostCard({ post }) {
   const { token } = useAuthStore();
   const navigate = useNavigate();
 
-  const userVote = post._userVote ?? 0;
+  const userVote = post.userVote ?? 0;
 
   const handleVote = (dir) => {
     if (!token) {
@@ -30,6 +30,8 @@ export function FeedPostCard({ post }) {
     }
     vote(post.id, dir);
   };
+
+  const community = post.community || "general";
 
   return (
     <Card className="shadow-none transition-colors hover:border-ring/40">
@@ -43,7 +45,7 @@ export function FeedPostCard({ post }) {
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
               <span className="truncate font-medium text-foreground">
-                v/{post.community}
+                v/{community}
               </span>
               <span>by {post.author}</span>
               {post.createdAt && <span>{post.createdAt}</span>}
@@ -92,7 +94,7 @@ export function FeedPostCard({ post }) {
               className={cn(
                 "min-w-8 px-1 text-center text-xs font-semibold tabular-nums",
                 userVote === 1 && "text-primary",
-                userVote === -1 && "text-destructive"
+                userVote === -1 && "text-destructive",
               )}
             >
               {post.votes ?? 0}
@@ -109,12 +111,7 @@ export function FeedPostCard({ post }) {
           </div>
 
           <div className="flex min-w-0 items-center gap-1">
-            <Button
-              size="sm"
-              variant="ghost"
-              className="px-2"
-              asChild
-            >
+            <Button size="sm" variant="ghost" className="px-2" asChild>
               <Link to={`/post/${post.id}`}>
                 <MessageCircle className="size-4" />
                 <span className="hidden min-[420px]:inline">

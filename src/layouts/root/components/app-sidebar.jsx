@@ -31,10 +31,12 @@ function mapSpaceToProject(space) {
 export function AppSidebar(props) {
   const token = useAuthStore((state) => state.token);
   const {
-    spaces,
+    subscribedSpaces,
     loading: spacesLoading,
+    subscriptionsLoading,
     error: spacesError,
-    fetchSpaces,
+    subscriptionsError,
+    fetchSubscriptions,
     createSpace,
     createLoading,
     createError,
@@ -47,14 +49,14 @@ export function AppSidebar(props) {
 
   useEffect(() => {
     if (!token) return;
-    fetchSpaces(1);
-  }, [token, fetchSpaces]);
+    fetchSubscriptions();
+  }, [token, fetchSubscriptions]);
 
   useEffect(() => {
-    if (spacesError) {
-      setFormError(spacesError);
+    if (spacesError || subscriptionsError) {
+      setFormError(spacesError || subscriptionsError);
     }
-  }, [spacesError]);
+  }, [spacesError, subscriptionsError]);
 
   useEffect(() => {
     if (createError) {
@@ -63,7 +65,9 @@ export function AppSidebar(props) {
   }, [createError]);
 
   const projects =
-    spaces.length > 0 ? spaces.map(mapSpaceToProject) : sidebarData.projects;
+    subscribedSpaces.length > 0
+      ? subscribedSpaces.map(mapSpaceToProject)
+      : sidebarData.projects;
 
   const handleCreateSpace = async () => {
     if (!title.trim() || !description.trim()) {
@@ -120,7 +124,7 @@ export function AppSidebar(props) {
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                     placeholder="Short description"
-                    className="mt-2 min-h-[6rem]"
+                    className="mt-2 min-h-24"
                   />
                 </div>
                 {formError && (

@@ -5,6 +5,7 @@ import {
   getStoredAccessToken,
   storeAuthSession,
 } from "../services/api";
+import { getErrorMessage } from "@/lib/error";
 
 const USER_KEY = "user";
 const ACCESS_TOKEN_EXPIRES_AT_KEY = "access_token_expires_at";
@@ -35,25 +36,6 @@ function decodeJwtPayload(token) {
   } catch {
     return null;
   }
-}
-
-function getErrorMessage(err, fallback) {
-  const response = err.response?.data || err.data;
-  const errors = response?.errors;
-  const message = response?.msg || response?.message;
-
-  if (errors) {
-    return (
-      errors.non_field ||
-      errors.username ||
-      errors.password ||
-      Object.values(errors).filter(Boolean).join(", ") ||
-      message ||
-      fallback
-    );
-  }
-
-  return message || fallback;
 }
 
 function buildSessionFromResponse(response, fallbackUsername) {

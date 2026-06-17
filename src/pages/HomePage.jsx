@@ -60,12 +60,7 @@ export default function HomePage() {
                     </div>
                   </div>
                 ))
-              : posts.map((post) => (
-                  <FeedPostCard
-                    key={`${post.id}-${post.created_at}`}
-                    post={post}
-                  />
-                ))}
+              : posts.map((post) => <FeedPostCard key={post.id} post={post} />)}
           </div>
 
           {error && (

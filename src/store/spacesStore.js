@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { getResponseData, spacesAPI } from "../services/api";
+import { getErrorMessage } from "@/lib/error";
 
 function slugify(input) {
   if (!input) return "";
@@ -12,37 +13,28 @@ function slugify(input) {
     .substring(0, 50);
 }
 
-function getErrorMessage(err, fallback) {
-  const errors = err.response?.data?.errors;
-  return (
-    errors?.non_field ||
-    errors?.title ||
-    errors?.description ||
-    Object.values(errors ?? {})
-      .filter(Boolean)
-      .join(", ") ||
-    err.message ||
-    fallback
-  );
-}
-
 function normaliseSpace(space) {
   return {
-    id: space.id ?? space.ID,
-    title: space.title ?? space.Title ?? "space",
-    description: space.description ?? space.Description ?? "",
+    ...space,
+    id: space.id,
+    username: space.username,
+    title: space.title ?? "space",
+    description: space.description ?? "",
+    subscribersCount: space.subscribersCount ?? 0,
+    views: space.views ?? 0,
   };
 }
 
 export const useSpacesStore = create((set, get) => ({
   spaces: [],
+  subscribedSpaces: [],
   loading: false,
+  subscriptionsLoading: false,
   error: null,
+  subscriptionsError: null,
   page: 1,
   hasMore: true,
-
-  createLoading: false,
-  createError: null,
+  subscribeLoading: false,
 
   fetchSpaces: async (page = 1, sort_by = "") => {
     set({ loading: true, error: null });
@@ -60,6 +52,38 @@ export const useSpacesStore = create((set, get) => ({
         loading: false,
         error: getErrorMessage(err, "Failed to load spaces"),
       });
+    }
+  },
+
+  fetchSubscriptions: async () => {
+    set({ subscriptionsLoading: true, subscriptionsError: null });
+    try {
+      const { data } = await spacesAPI.getSubscriptions();
+      const incoming = getResponseData(data, []).map(normaliseSpace);
+      set({ subscribedSpaces: incoming, subscriptionsLoading: false });
+    } catch (err) {
+      set({
+        subscriptionsLoading: false,
+        subscriptionsError: getErrorMessage(
+          err,
+          "Failed to load subscriptions",
+        ),
+      });
+    }
+  },
+
+  subscribeToSpace: async (spaceId) => {
+    set({ subscribeLoading: true, error: null });
+    try {
+      await spacesAPI.subscribe(spaceId);
+      await get().fetchSubscriptions();
+      await get().fetchSpaces(1);
+      set({ subscribeLoading: false });
+      return { success: true };
+    } catch (err) {
+      const msg = getErrorMessage(err, "Failed to subscribe to space");
+      set({ subscribeLoading: false, error: msg });
+      return { success: false, error: msg };
     }
   },
 

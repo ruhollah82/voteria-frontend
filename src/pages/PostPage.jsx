@@ -64,10 +64,10 @@ export default function PostPage() {
 
   if (!currentPost) return null;
 
-  const userVote = currentPost._userVote ?? 0;
-  const community = currentPost.community ?? "general";
+  const userVote = currentPost.userVote ?? 0;
+  const community = currentPost.community || "general";
   const author = currentPost.author ?? "u/unknown";
-  const score = currentPost.votes ?? currentPost.score ?? 0;
+  const score = currentPost.score ?? 0;
   const tags = currentPost.tags ?? [];
   const createdAt = currentPost.createdAt;
 
@@ -130,7 +130,7 @@ export default function PostPage() {
                 className={cn(
                   "min-w-8 px-1 text-center text-xs font-semibold tabular-nums",
                   userVote === 1 && "text-primary",
-                  userVote === -1 && "text-destructive"
+                  userVote === -1 && "text-destructive",
                 )}
               >
                 {score}
