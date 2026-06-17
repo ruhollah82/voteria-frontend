@@ -67,7 +67,7 @@ export function AppSidebar(props) {
   const projects =
     subscribedSpaces.length > 0
       ? subscribedSpaces.map(mapSpaceToProject)
-      : sidebarData.projects;
+      : null;
 
   const handleCreateSpace = async () => {
     if (!title.trim() || !description.trim()) {

@@ -18,7 +18,7 @@ function normaliseSpace(space) {
     ...space,
     id: space.id,
     username: space.username,
-    title: space.title ?? "space",
+    title: space.username ?? "کیر",
     description: space.description ?? "",
     subscribersCount: space.subscribersCount ?? 0,
     views: space.views ?? 0,

@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { communities } from "@/lib/voteria-data";
 import { useAuthStore } from "@/store/authStore";
 import { useSpacesStore } from "@/store/spacesStore";
 
@@ -42,9 +41,9 @@ export function FeedRightRail() {
     ? [...spaces]
         .sort((a, b) => b.subscribersCount - a.subscribersCount)
         .slice(0, 6)
-    : communities.map((community) => ({
-        name: community.name,
-        members: community.members,
+    : spaces.map((space) => ({
+        name: space.name,
+        members: space.members,
       }));
 
   const handleJoin = async (spaceId) => {
@@ -89,7 +88,7 @@ export function FeedRightRail() {
               <div className="flex items-center justify-between gap-3 rounded-lg p-2 hover:bg-muted/70">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-card-foreground">
-                    v/{space.title ?? space.name}
+                    v/{space.title}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {space.subscribersCount != null
