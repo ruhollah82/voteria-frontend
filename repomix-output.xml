@@ -53,6 +53,7 @@ index.html
 jsconfig.json
 package.json
 public/favicon.svg
+public/Voteria.png
 README.md
 src/app/providers/ThemeProvider.jsx
 src/app/router.jsx
@@ -110,6 +111,7 @@ src/pages/AuthPage.jsx
 src/pages/HomePage.jsx
 src/pages/NotFoundPage.jsx
 src/pages/PostPage.jsx
+src/pages/SpacePage.jsx
 src/pages/SubmitPage.jsx
 src/services/api.js
 src/store/authStore.js
@@ -1486,94 +1488,6 @@ function Label({
 export { Label }
 </file>
 
-<file path="src/components/ui/markdown-renderer.jsx">
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { cn } from "@/lib/utils";
-
-export function MarkdownRenderer({ content, className }) {
-  if (!content) return null;
-
-  return (
-    <div
-      className={cn(
-        "text-sm leading-relaxed text-foreground space-y-2",
-        className,
-      )}
-    >
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={{
-          h1: (props) => (
-            <h1
-              className="text-2xl font-bold mt-4 mb-2 break-words"
-              {...props}
-            />
-          ),
-          h2: (props) => (
-            <h2
-              className="text-xl font-bold mt-3 mb-2 break-words"
-              {...props}
-            />
-          ),
-          h3: (props) => (
-            <h3
-              className="text-lg font-semibold mt-2 mb-1 break-words"
-              {...props}
-            />
-          ),
-          p: (props) => (
-            <p className="my-1 leading-relaxed break-words" {...props} />
-          ),
-          a: (props) => (
-            <a
-              className="text-primary hover:underline break-all"
-              target="_blank"
-              rel="noopener noreferrer"
-              {...props}
-            />
-          ),
-
-          ul: (props) => (
-            <ul className="list-disc ps-5 my-2 space-y-1" {...props} />
-          ),
-          ol: (props) => (
-            <ol className="list-decimal ps-5 my-2 space-y-1" {...props} />
-          ),
-          li: (props) => <li className="leading-relaxed" {...props} />,
-          blockquote: (props) => (
-            <blockquote
-              className="border-s-4 border-primary/50 ps-3 italic text-muted-foreground my-2"
-              {...props}
-            />
-          ),
-          // Inline code
-          code: (props) => (
-            <code
-              className="font-mono text-xs rounded bg-muted px-1 py-0.5"
-              {...props}
-            />
-          ),
-          // Block code (strips the inline background/padding from the inner code tag)
-          pre: (props) => (
-            <pre
-              className="rounded-lg bg-muted p-3 overflow-x-auto my-2 font-mono text-xs [&>code]:bg-transparent [&>code]:p-0"
-              {...props}
-            />
-          ),
-          hr: (props) => <hr className="my-4 border-border" {...props} />,
-          img: (props) => (
-            <img className="rounded-lg max-w-full my-2" {...props} />
-          ),
-        }}
-      >
-        {content}
-      </ReactMarkdown>
-    </div>
-  );
-}
-</file>
-
 <file path="src/components/ui/select.jsx">
 import * as React from "react"
 import { Select as SelectPrimitive } from "radix-ui"
@@ -2781,468 +2695,106 @@ const NotFoundPage = () => {
 export default NotFoundPage
 </file>
 
-<file path="src/pages/SubmitPage.jsx">
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+<file path="src/pages/SpacePage.jsx">
+// src/pages/SpacePage.jsx
+import { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { useAuthStore } from "@/store/authStore";
-import { useSpacesStore } from "@/store/spacesStore";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft } from "lucide-react";
+import { FeedFilters, FeedPostCard } from "@/features/feed";
 import { usePostsStore } from "@/store/postsStore";
-import {
-  Bold,
-  Italic,
-  Link2,
-  Image as ImageIcon,
-  Quote,
-  Code,
-  List,
-  Eye,
-  Edit3,
-  FileText,
-  Link as LinkIcon,
-  BarChart3,
-  Send,
-} from "lucide-react";
-import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+import { useSpacesStore } from "@/store/spacesStore";
 
-export default function SubmitPage() {
-  const { token, user } = useAuthStore();
-  const navigate = useNavigate();
-  const { spaces, fetchSpaces } = useSpacesStore();
-  const { createPost } = usePostsStore();
+const SORT_MAP = {
+  Best: "",
+  Hot: "score",
+  Rising: "date",
+};
 
-  const [selectedSpaceId, setSelectedSpaceId] = useState("");
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [linkUrl, setLinkUrl] = useState("");
-  const [activeTab, setActiveTab] = useState("post");
-  const [isPreview, setIsPreview] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+export default function SpacePage() {
+  const { spaceId } = useParams();
+  const [activeFilter, setActiveFilter] = useState("Best");
+  const { posts, loading, error, fetchSpacePosts, hasMore, page } =
+    usePostsStore();
+  const { subscribedSpaces, spaces } = useSpacesStore();
 
-  const textareaRef = useRef(null);
+  const sortBy = SORT_MAP[activeFilter];
 
-  // Redirect if not logged in & fetch spaces
+  // Find the space details from either subscribed or all spaces
+  const allSpaces = [...subscribedSpaces, ...spaces];
+  const space = allSpaces.find((s) => String(s.id) === String(spaceId));
+
   useEffect(() => {
-    if (!token) {
-      navigate("/login");
-      return;
+    fetchSpacePosts(spaceId, 1, sortBy);
+  }, [fetchSpacePosts, spaceId, sortBy]);
+
+  const handleLoadMore = () => {
+    if (!loading && hasMore) {
+      fetchSpacePosts(spaceId, page + 1, sortBy);
     }
-    if (spaces.length === 0) {
-      fetchSpaces(1);
-    }
-  }, [token, navigate, spaces.length, fetchSpaces]);
-
-  // Auto-select the first space if none is selected
-  useEffect(() => {
-    if (!selectedSpaceId && spaces.length > 0) {
-      setSelectedSpaceId(String(spaces[0].id));
-    }
-  }, [spaces, selectedSpaceId]);
-
-  // --- Markdown Toolbar Logic ---
-  const insertMarkdown = (before, after = "") => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = content.substring(start, end);
-
-    const newText =
-      content.substring(0, start) +
-      before +
-      selectedText +
-      after +
-      content.substring(end);
-
-    setContent(newText);
-
-    setTimeout(() => {
-      textarea.focus();
-      if (selectedText.length > 0) {
-        const newCursorPos =
-          start + before.length + selectedText.length + after.length;
-        textarea.setSelectionRange(newCursorPos, newCursorPos);
-      } else {
-        const newCursorPos = start + before.length;
-        textarea.setSelectionRange(newCursorPos, newCursorPos);
-      }
-    }, 0);
-  };
-
-  // --- Submission Logic ---
-  const handleSubmit = async () => {
-    if (!title.trim()) {
-      setError("Title is required.");
-      return;
-    }
-    if (!selectedSpaceId) {
-      setError("Please select a space.");
-      return;
-    }
-    if (!content.trim()) {
-      setError("Cannot submit an empty Post!");
-    }
-    if (content.length > 1000) {
-      setError("Post content cannot exceed 1,000 characters.");
-      return;
-    }
-
-    let finalContent = content;
-    if (activeTab === "link") {
-      if (!linkUrl.trim()) {
-        setError("URL is required.");
-        return;
-      }
-      finalContent = `[${title}](${linkUrl})`;
-    }
-
-    setLoading(true);
-    setError(null);
-    const result = await createPost(
-      selectedSpaceId,
-      title.trim(),
-      finalContent,
-    );
-    setLoading(false);
-
-    if (result.success) {
-      navigate("/");
-    } else {
-      setError(result.error || "Failed to create post.");
-    }
-  };
-
-  // --- Safe Markdown Preview Renderer ---
-  const renderPreview = (text) => {
-    if (!text)
-      return "<p class='text-muted-foreground italic'>Nothing to preview</p>";
-    return <MarkdownRenderer content={text} />;
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl py-6 space-y-6">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Create a Post</h1>
-        <p className="text-sm text-muted-foreground">
-          Share your thoughts, links, or media with the community.
-        </p>
-      </div>
+    <div className="mx-auto w-full max-w-4xl space-y-4">
+      <Button variant="ghost" size="sm" asChild className="-mb-2">
+        <Link to="/">
+          <ArrowLeft className="size-4" /> Back to Feed
+        </Link>
+      </Button>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-        {/* Main Editor Area */}
-        <div className="space-y-4">
-          <Card className="shadow-none">
-            <CardContent className="p-4 space-y-4">
-              {/* Space Selector */}
-              <div className="flex flex-wrap items-center gap-3">
-                <Select
-                  value={selectedSpaceId}
-                  onValueChange={setSelectedSpaceId}
-                >
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Choose a space" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {spaces.map((space) => (
-                      <SelectItem key={space.id} value={String(space.id)}>
-                        v/{space.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Badge variant="outline" className="text-xs">
-                  Posting as u/{user?.username || "you"}
-                </Badge>
-              </div>
+      {/* Space Header */}
+      {space && (
+        <Card className="p-4 shadow-none">
+          <h1 className="text-xl font-bold text-foreground">v/{space.title}</h1>
+          {space.description && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              {space.description}
+            </p>
+          )}
+        </Card>
+      )}
 
-              <Separator />
+      <FeedFilters
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+      />
 
-              {/* Post Type Tabs */}
-              <Tabs
-                value={activeTab}
-                onValueChange={setActiveTab}
-                className="w-full"
+      {/* Posts List */}
+      <div className="space-y-3">
+        {loading && posts.length === 0
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-lg border border-border bg-card p-4 space-y-3"
               >
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="post" className="gap-2">
-                    <FileText className="size-4" /> Post
-                  </TabsTrigger>
-                  <TabsTrigger value="link" className="gap-2">
-                    <LinkIcon className="size-4" /> Link
-                  </TabsTrigger>
-                  <TabsTrigger value="poll" className="gap-2" disabled>
-                    <BarChart3 className="size-4" /> Poll
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="post" className="mt-4 space-y-4">
-                  <Input
-                    placeholder="Title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="text-lg font-medium h-11"
-                    maxLength={300}
-                  />
-
-                  {/* Markdown Toolbar */}
-                  <div className="flex items-center gap-1 p-1 border border-input rounded-lg bg-muted/30">
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="ghost"
-                      onClick={() => insertMarkdown("**", "**")}
-                      title="Bold"
-                    >
-                      <Bold className="size-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="ghost"
-                      onClick={() => insertMarkdown("*", "*")}
-                      title="Italic"
-                    >
-                      <Italic className="size-4" />
-                    </Button>
-                    <Separator orientation="vertical" className="mx-1 h-5" />
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="ghost"
-                      onClick={() => insertMarkdown("[", "](url)")}
-                      title="Link"
-                    >
-                      <Link2 className="size-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="ghost"
-                      onClick={() => insertMarkdown("![alt](", ")")}
-                      title="Image"
-                    >
-                      <ImageIcon className="size-4" />
-                    </Button>
-                    <Separator orientation="vertical" className="mx-1 h-5" />
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="ghost"
-                      onClick={() => insertMarkdown("> ")}
-                      title="Quote"
-                    >
-                      <Quote className="size-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="ghost"
-                      onClick={() => insertMarkdown("`", "`")}
-                      title="Code"
-                    >
-                      <Code className="size-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="ghost"
-                      onClick={() => insertMarkdown("- ")}
-                      title="Bullet List"
-                    >
-                      <List className="size-4" />
-                    </Button>
-
-                    <div className="ml-auto flex items-center gap-1">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={isPreview ? "ghost" : "secondary"}
-                        onClick={() => setIsPreview(false)}
-                        className="h-7 gap-1.5"
-                      >
-                        <Edit3 className="size-3.5" /> Write
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={isPreview ? "secondary" : "ghost"}
-                        onClick={() => setIsPreview(true)}
-                        className="h-7 gap-1.5"
-                      >
-                        <Eye className="size-3.5" /> Preview
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Textarea / Preview */}
-                  {isPreview ? (
-                    <div
-                      className="min-h-[300px] w-full rounded-md border border-input bg-background p-4 text-sm leading-relaxed max-w-none"
-                      dangerouslySetInnerHTML={{
-                        __html: renderPreview(content),
-                      }}
-                    />
-                  ) : (
-                    <div className="relative">
-                      <Textarea
-                        ref={textareaRef}
-                        placeholder="Text (optional)"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        className="min-h-[300px] text-sm leading-relaxed resize-y pb-10"
-                        onKeyDown={(e) => {
-                          if (e.ctrlKey || e.metaKey) {
-                            if (e.key === "b") {
-                              e.preventDefault();
-                              insertMarkdown("**", "**");
-                            } else if (e.key === "i") {
-                              e.preventDefault();
-                              insertMarkdown("*", "*");
-                            } else if (e.key === "Enter") {
-                              e.preventDefault();
-                              // Prevent shortcut submission if over limit
-                              if (content.length <= 1000) handleSubmit();
-                            }
-                          }
-                        }}
-                      />
-                      {/* Character counter */}
-                      <div
-                        className={`absolute bottom-3 end-4 text-xs tabular-nums pointer-events-none ${content.length > 1000 ? "text-destructive font-medium" : "text-muted-foreground"}`}
-                      >
-                        {content.length.toLocaleString()} / 1,000
-                      </div>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="link" className="mt-4 space-y-4">
-                  <Input
-                    placeholder="Title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="text-lg font-medium h-11"
-                    maxLength={300}
-                  />
-                  <div className="relative">
-                    <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                    <Input
-                      placeholder="https://example.com"
-                      value={linkUrl}
-                      onChange={(e) => setLinkUrl(e.target.value)}
-                      className="h-11 ps-9"
-                    />
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="poll" className="mt-4">
-                  <p className="text-center text-sm text-muted-foreground py-12">
-                    Polls are coming soon!
-                  </p>
-                </TabsContent>
-              </Tabs>
-
-              {error && (
-                <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                  {error}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Action Bar */}
-          <div className="flex items-center justify-end gap-3">
-            <Button variant="outline" onClick={() => navigate(-1)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={loading || !title.trim() || content.length > 1000}
-              className="gap-2"
-            >
-              {loading ? (
-                "Posting..."
-              ) : (
-                <>
-                  <Send className="size-4" /> Post
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {/* Right Sidebar / Rules */}
-        <div className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-          <Card className="shadow-none border-dashed">
-            <CardContent className="p-4 space-y-3">
-              <h3 className="text-sm font-semibold flex items-center gap-2">
-                <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-primary text-xs">
-                  ?
-                </span>
-                Posting Guidelines
-              </h3>
-              <ul className="space-y-2 text-xs text-muted-foreground leading-relaxed">
-                <li className="flex gap-2">
-                  <span className="mt-1 size-1.5 rounded-full bg-primary/50 shrink-0" />
-                  Remember to be human and follow community rules.
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-1 size-1.5 rounded-full bg-primary/50 shrink-0" />
-                  Use Markdown to format your text beautifully.
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-1 size-1.5 rounded-full bg-primary/50 shrink-0" />
-                  No spam, self-promotion, or malicious links.
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-1 size-1.5 rounded-full bg-primary/50 shrink-0" />
-                  Choose the correct space for your content.
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-none bg-muted/30 border-none">
-            <CardContent className="p-4 text-xs text-muted-foreground space-y-2">
-              <p className="font-medium text-foreground">Keyboard Shortcuts</p>
-              <div className="flex justify-between">
-                <span>Bold</span>
-                <kbd className="px-1.5 py-0.5 rounded bg-background border text-[10px] font-mono">
-                  Ctrl + B
-                </kbd>
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-2/3" />
               </div>
-              <div className="flex justify-between">
-                <span>Italic</span>
-                <kbd className="px-1.5 py-0.5 rounded bg-background border text-[10px] font-mono">
-                  Ctrl + I
-                </kbd>
-              </div>
-              <div className="flex justify-between">
-                <span>Submit</span>
-                <kbd className="px-1.5 py-0.5 rounded bg-background border text-[10px] font-mono">
-                  Ctrl + Enter
-                </kbd>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            ))
+          : posts.map((post) => <FeedPostCard key={post.id} post={post} />)}
       </div>
+
+      {error && (
+        <p className="text-center text-sm text-destructive py-4">{error}</p>
+      )}
+
+      {hasMore && !loading && posts.length > 0 && (
+        <button
+          onClick={handleLoadMore}
+          className="w-full rounded-lg border border-border bg-card py-2.5 text-sm text-muted-foreground hover:bg-muted/50 transition-colors"
+        >
+          Load more
+        </button>
+      )}
+
+      {loading && posts.length > 0 && (
+        <p className="text-center text-sm text-muted-foreground py-2">
+          Loading…
+        </p>
+      )}
     </div>
   );
 }
@@ -3311,22 +2863,6 @@ export default defineConfig([
     },
   },
 ]);
-</file>
-
-<file path="index.html">
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Voteria</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
 </file>
 
 <file path="jsconfig.json">
@@ -3492,6 +3028,131 @@ const CardFooter = React.forwardRef(({ className, ...props }, ref) => (
 CardFooter.displayName = "CardFooter";
 
 export { Card, CardHeader, CardContent, CardFooter };
+</file>
+
+<file path="src/components/ui/markdown-renderer.jsx">
+// src/components/ui/markdown-renderer.jsx
+
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Check, Copy } from "lucide-react";
+import "highlight.js/styles/github-dark.css";
+import "katex/dist/katex.min.css";
+
+// Recursively extract plain text from React children
+function extractText(node) {
+  if (node == null) return "";
+  if (typeof node === "string") return node;
+  if (typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(extractText).join("");
+  if (node.props?.children) return extractText(node.props.children);
+  return "";
+}
+
+function CodeBlock({ node, inline, className, children, ...props }) {
+  const [copied, setCopied] = useState(false);
+  const match = /language-(\w+)/.exec(className || "");
+  const code = extractText(children).replace(/\n$/, "");
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy code:", err);
+    }
+  };
+
+  // ✅ Fix 1: Reduced padding for inline code
+  if (inline) {
+    return (
+      <code
+        className="font-mono text-[0.85em] rounded bg-muted px-1 py-0.5 break-words"
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  }
+
+  return (
+    <div className="relative group/code my-3">
+      {match && (
+        <div className="absolute top-0 start-0 px-3 py-1 text-xs font-mono text-muted-foreground bg-muted/50 rounded-se-lg border-b border-e border-border">
+          {match[1]}
+        </div>
+      )}
+      <button
+        onClick={handleCopy}
+        className="absolute top-2 end-2 p-1.5 rounded-md bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground opacity-0 group-hover/code:opacity-100 transition-opacity"
+        aria-label="Copy code"
+      >
+        {copied ? (
+          <Check className="size-3.5" />
+        ) : (
+          <Copy className="size-3.5" />
+        )}
+      </button>
+      <pre
+        className={cn(
+          "rounded-lg bg-[#0d1117] p-4 pt-10 overflow-x-auto font-mono text-sm leading-relaxed",
+          className,
+        )}
+        {...props}
+      >
+        <code className={className} {...props}>
+          {children}
+        </code>
+      </pre>
+    </div>
+  );
+}
+
+export function MarkdownRenderer({ content, className }) {
+  if (!content) return null;
+
+  return (
+    <div
+      className={cn(
+        "prose prose-sm max-w-none dark:prose-invert break-words",
+        "prose-headings:font-bold prose-headings:tracking-tight",
+        "prose-h1:text-2xl prose-h1:mt-6 prose-h1:mb-3",
+        "prose-h2:text-xl prose-h2:mt-5 prose-h2:mb-2",
+        "prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2",
+        "prose-p:leading-relaxed prose-p:my-2 prose-p:break-words",
+        "prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-a:break-all",
+        "prose-strong:font-semibold",
+        "prose-blockquote:border-s-4 prose-blockquote:border-primary/50 prose-blockquote:ps-4 prose-blockquote:italic prose-blockquote:text-muted-foreground",
+        "prose-ul:my-2 prose-ul:space-y-1",
+        "prose-ol:my-2 prose-ol:space-y-1",
+        "prose-li:leading-relaxed prose-li:break-words",
+        "prose-table:border-collapse prose-table:w-full",
+        "prose-th:border prose-th:border-border prose-th:bg-muted/50 prose-th:px-3 prose-th:py-2 prose-th:text-start prose-th:font-semibold",
+        "prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:break-words",
+        "prose-hr:my-6 prose-hr:border-border",
+        "prose-img:rounded-lg prose-img:max-w-full prose-img:my-4",
+        className,
+      )}
+    >
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeHighlight, rehypeKatex]}
+        components={{
+          code: CodeBlock,
+          pre: ({ children }) => <>{children}</>,
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}
 </file>
 
 <file path="src/features/comments/components/CommentThread.jsx">
@@ -3738,96 +3399,6 @@ export { FeedPostCard } from "./components/feed-post-card";
 export { FeedRightRail } from "./components/feed-right-rail";
 </file>
 
-<file path="src/layouts/root/components/nav-projects.jsx">
-"use client";
-
-import { Link, useLocation } from "react-router-dom";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
-import {
-  MoreHorizontalIcon,
-  FolderIcon,
-  ArrowRightIcon,
-  Trash2Icon,
-} from "lucide-react";
-
-export function NavProjects({ projects = [] }) {
-  const { isMobile } = useSidebar();
-  const { pathname } = useLocation();
-
-  return (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>My Voteria</SidebarGroupLabel>
-      <SidebarMenu>
-        {projects.map((item) => {
-          const Icon = item.icon;
-          return (
-            <SidebarMenuItem key={item.name}>
-              <SidebarMenuButton asChild isActive={pathname === item.url}>
-                <Link to={item.url}>
-                  {Icon ? <Icon className="size-4" /> : null}
-                  <span>{item.name}</span>
-                </Link>
-              </SidebarMenuButton>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuAction
-                    showOnHover
-                    className="aria-expanded:bg-muted"
-                  >
-                    <MoreHorizontalIcon />
-                    <span className="sr-only">More</span>
-                  </SidebarMenuAction>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="w-fit"
-                  side={isMobile ? "bottom" : "right"}
-                  align={isMobile ? "end" : "start"}
-                >
-                  <DropdownMenuItem>
-                    <FolderIcon />
-                    <span>Open</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <ArrowRightIcon />
-                    <span>Share</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem variant="destructive">
-                    <Trash2Icon />
-                    <span>Remove</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-          );
-        })}
-        <SidebarMenuItem>
-          <SidebarMenuButton className="text-sidebar-foreground/70">
-            <MoreHorizontalIcon className="text-sidebar-foreground/70" />
-            <span>More</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    </SidebarGroup>
-  );
-}
-</file>
-
 <file path="src/main.jsx">
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -3904,6 +3475,22 @@ const AboutPage = () => {
 };
 
 export default AboutPage;
+</file>
+
+<file path="index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/Voteria.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voteria</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
 </file>
 
 <file path="src/components/ui/sidebar.jsx">
@@ -4778,53 +4365,100 @@ export function CommentItem({ comment, postId, depth = 0 }) {
 }
 </file>
 
-<file path="src/features/feed/components/feed-filters.jsx">
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Flame, ListFilter, Sparkles, TrendingUp } from "lucide-react";
+<file path="src/layouts/root/components/nav-projects.jsx">
+"use client";
 
-const filters = [
-  { label: "Best", icon: Sparkles },
-  { label: "Hot", icon: Flame },
-  { label: "Rising", icon: TrendingUp },
-];
+import { Link, useLocation } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import {
+  MoreHorizontalIcon,
+  FolderIcon,
+  ArrowRightIcon,
+  Trash2Icon,
+} from "lucide-react";
+import { useSpacesStore } from "@/store/spacesStore";
 
-export function FeedFilters({ activeFilter, onFilterChange }) {
+export function NavProjects({ projects = [] }) {
+  const { isMobile } = useSidebar();
+  const { pathname } = useLocation();
+
+  const unsubscribeFromSpace = useSpacesStore((s) => s.unsubscribeFromSpace);
+
   return (
-    <div className="rounded-lg border border-border bg-card shadow-none">
-      <div className="flex items-center gap-2 overflow-x-auto p-1.5">
-        <span className="hidden shrink-0 px-2 text-xs font-medium text-muted-foreground sm:inline">
-          Sort
-        </span>
-        {filters.map((filter) => {
-          const Icon = filter.icon;
-          const isActive = activeFilter === filter.label;
-
+    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+      <SidebarGroupLabel>My Voteria</SidebarGroupLabel>
+      <SidebarMenu>
+        {projects.map((item) => {
+          const Icon = item.icon;
           return (
-            <Button
-              key={filter.label}
-              size="sm"
-              variant="ghost"
-              className={cn(
-                "h-8 shrink-0 px-2.5 text-muted-foreground",
-                isActive &&
-                  "bg-muted text-foreground shadow-sm hover:bg-muted hover:text-foreground",
-              )}
-              aria-pressed={isActive}
-              onClick={() => onFilterChange(filter.label)}
-            >
-              <Icon className="size-4" />
-              {filter.label}
-            </Button>
+            <SidebarMenuItem key={item.name}>
+              <SidebarMenuButton asChild isActive={pathname === item.url}>
+                <Link to={item.url}>
+                  {Icon ? <Icon className="size-4" /> : null}
+                  <span>{item.name}</span>
+                </Link>
+              </SidebarMenuButton>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuAction
+                    showOnHover
+                    className="aria-expanded:bg-muted"
+                  >
+                    <MoreHorizontalIcon />
+                    <span className="sr-only">More</span>
+                  </SidebarMenuAction>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="w-fit"
+                  side={isMobile ? "bottom" : "right"}
+                  align={isMobile ? "end" : "start"}
+                >
+                  <DropdownMenuItem asChild>
+                    <Link to={item.url}>
+                      <FolderIcon />
+                      <span>Open</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <ArrowRightIcon />
+                    <span>Share</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => unsubscribeFromSpace(item.id)}
+                  >
+                    <Trash2Icon />
+                    <span>Unsubscribe</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
           );
         })}
-        <div className="ms-auto shrink-0">
-          <Button size="icon-sm" variant="ghost" aria-label="Open feed filters">
-            <ListFilter className="size-4" />
-          </Button>
-        </div>
-      </div>
-    </div>
+        <SidebarMenuItem>
+          <SidebarMenuButton className="text-sidebar-foreground/70">
+            <MoreHorizontalIcon className="text-sidebar-foreground/70" />
+            <span>More</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </SidebarGroup>
   );
 }
 </file>
@@ -4951,6 +4585,470 @@ export default function AuthPage() {
 }
 </file>
 
+<file path="src/pages/SubmitPage.jsx">
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { useAuthStore } from "@/store/authStore";
+import { useSpacesStore } from "@/store/spacesStore";
+import { usePostsStore } from "@/store/postsStore";
+import {
+  Bold,
+  Italic,
+  Link2,
+  Image as ImageIcon,
+  Quote,
+  Code,
+  List,
+  Eye,
+  Edit3,
+  FileText,
+  Link as LinkIcon,
+  BarChart3,
+  Send,
+} from "lucide-react";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+
+export default function SubmitPage() {
+  const { token, user } = useAuthStore();
+  const navigate = useNavigate();
+  const { spaces, fetchSpaces } = useSpacesStore();
+  const { createPost } = usePostsStore();
+
+  const [selectedSpaceId, setSelectedSpaceId] = useState("");
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+  const [activeTab, setActiveTab] = useState("post");
+  const [isPreview, setIsPreview] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const textareaRef = useRef(null);
+
+  // Redirect if not logged in & fetch spaces
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    if (spaces.length === 0) {
+      fetchSpaces(1);
+    }
+  }, [token, navigate, spaces.length, fetchSpaces]);
+
+  // Auto-select the first space if none is selected
+  useEffect(() => {
+    if (!selectedSpaceId && spaces.length > 0) {
+      setSelectedSpaceId(String(spaces[0].id));
+    }
+  }, [spaces, selectedSpaceId]);
+
+  // --- Markdown Toolbar Logic ---
+  const insertMarkdown = (before, after = "") => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = content.substring(start, end);
+
+    const newText =
+      content.substring(0, start) +
+      before +
+      selectedText +
+      after +
+      content.substring(end);
+
+    setContent(newText);
+
+    setTimeout(() => {
+      textarea.focus();
+      if (selectedText.length > 0) {
+        const newCursorPos =
+          start + before.length + selectedText.length + after.length;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+      } else {
+        const newCursorPos = start + before.length;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
+  };
+
+  // --- Submission Logic ---
+  const handleSubmit = async () => {
+    if (!title.trim()) {
+      setError("Title is required.");
+      return;
+    }
+    if (!selectedSpaceId) {
+      setError("Please select a space.");
+      return;
+    }
+    if (!content.trim()) {
+      setError("Cannot submit an empty Post!");
+    }
+    if (content.length > 10000) {
+      setError("Post content cannot exceed 1,000 characters.");
+      return;
+    }
+
+    let finalContent = content;
+    if (activeTab === "link") {
+      if (!linkUrl.trim()) {
+        setError("URL is required.");
+        return;
+      }
+      finalContent = `[${title}](${linkUrl})`;
+    }
+
+    setLoading(true);
+    setError(null);
+    const result = await createPost(
+      selectedSpaceId,
+      title.trim(),
+      finalContent,
+    );
+    setLoading(false);
+
+    if (result.success) {
+      navigate("/");
+    } else {
+      setError(result.error || "Failed to create post.");
+    }
+  };
+
+  return (
+    <div className="mx-auto w-full max-w-4xl py-6 space-y-6">
+      {/* Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight">Create a Post</h1>
+        <p className="text-sm text-muted-foreground">
+          Share your thoughts, links, or media with the community.
+        </p>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+        {/* Main Editor Area */}
+        <div className="space-y-4">
+          <Card className="shadow-none">
+            <CardContent className="p-4 space-y-4">
+              {/* Space Selector */}
+              <div className="flex flex-wrap items-center gap-3">
+                <Select
+                  value={selectedSpaceId}
+                  onValueChange={setSelectedSpaceId}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Choose a space" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {spaces.map((space) => (
+                      <SelectItem key={space.id} value={String(space.id)}>
+                        v/{space.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Badge variant="outline" className="text-xs">
+                  Posting as u/{user?.username || "you"}
+                </Badge>
+              </div>
+
+              <Separator />
+
+              {/* Post Type Tabs */}
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="post" className="gap-2">
+                    <FileText className="size-4" /> Post
+                  </TabsTrigger>
+                  <TabsTrigger value="link" className="gap-2">
+                    <LinkIcon className="size-4" /> Link
+                  </TabsTrigger>
+                  <TabsTrigger value="poll" className="gap-2" disabled>
+                    <BarChart3 className="size-4" /> Poll
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="post" className="mt-4 space-y-4">
+                  <Input
+                    placeholder="Title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="text-lg font-medium h-11"
+                    maxLength={300}
+                  />
+
+                  {/* Markdown Toolbar */}
+                  <div className="flex items-center gap-1 p-1 border border-input rounded-lg bg-muted/30">
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => insertMarkdown("**", "**")}
+                      title="Bold"
+                    >
+                      <Bold className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => insertMarkdown("*", "*")}
+                      title="Italic"
+                    >
+                      <Italic className="size-4" />
+                    </Button>
+                    <Separator orientation="vertical" className="mx-1 h-5" />
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => insertMarkdown("[", "](url)")}
+                      title="Link"
+                    >
+                      <Link2 className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => insertMarkdown("![alt](", ")")}
+                      title="Image"
+                    >
+                      <ImageIcon className="size-4" />
+                    </Button>
+                    <Separator orientation="vertical" className="mx-1 h-5" />
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => insertMarkdown("> ")}
+                      title="Quote"
+                    >
+                      <Quote className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => insertMarkdown("`", "`")}
+                      title="Code"
+                    >
+                      <Code className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => insertMarkdown("- ")}
+                      title="Bullet List"
+                    >
+                      <List className="size-4" />
+                    </Button>
+
+                    <div className="ml-auto flex items-center gap-1">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={isPreview ? "ghost" : "secondary"}
+                        onClick={() => setIsPreview(false)}
+                        className="h-7 gap-1.5"
+                      >
+                        <Edit3 className="size-3.5" /> Write
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={isPreview ? "secondary" : "ghost"}
+                        onClick={() => setIsPreview(true)}
+                        className="h-7 gap-1.5"
+                      >
+                        <Eye className="size-3.5" /> Preview
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Textarea / Preview */}
+                  {isPreview ? (
+                    <div className="min-h-[300px] w-full rounded-md border border-input bg-background p-4 text-sm leading-relaxed max-w-none">
+                      {/* Render MarkdownRenderer directly as a React component */}
+                      {content ? (
+                        <MarkdownRenderer content={content} />
+                      ) : (
+                        <p className="text-muted-foreground italic">
+                          Nothing to preview
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <Textarea
+                        ref={textareaRef}
+                        placeholder="Text (optional)"
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        className="min-h-[300px] text-sm leading-relaxed resize-y pb-10"
+                        onKeyDown={(e) => {
+                          if (e.ctrlKey || e.metaKey) {
+                            if (e.key === "b") {
+                              e.preventDefault();
+                              insertMarkdown("**", "**");
+                            } else if (e.key === "i") {
+                              e.preventDefault();
+                              insertMarkdown("*", "*");
+                            } else if (e.key === "Enter") {
+                              e.preventDefault();
+                              // Prevent shortcut submission if over limit
+                              if (content.length <= 10000) handleSubmit();
+                            }
+                          }
+                        }}
+                      />
+                      {/* Character counter */}
+                      <div
+                        className={`absolute bottom-3 end-4 text-xs tabular-nums pointer-events-none ${content.length > 10000 ? "text-destructive font-medium" : "text-muted-foreground"}`}
+                      >
+                        {content.length.toLocaleString()} / 10,000
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="link" className="mt-4 space-y-4">
+                  <Input
+                    placeholder="Title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="text-lg font-medium h-11"
+                    maxLength={300}
+                  />
+                  <div className="relative">
+                    <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input
+                      placeholder="https://example.com"
+                      value={linkUrl}
+                      onChange={(e) => setLinkUrl(e.target.value)}
+                      className="h-11 ps-9"
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="poll" className="mt-4">
+                  <p className="text-center text-sm text-muted-foreground py-12">
+                    Polls are coming soon!
+                  </p>
+                </TabsContent>
+              </Tabs>
+
+              {error && (
+                <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {error}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Action Bar */}
+          <div className="flex items-center justify-end gap-3">
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={loading || !title.trim() || content.length > 10000}
+              className="gap-2"
+            >
+              {loading ? (
+                "Posting..."
+              ) : (
+                <>
+                  <Send className="size-4" /> Post
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Right Sidebar / Rules */}
+        <div className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+          <Card className="shadow-none border-dashed">
+            <CardContent className="p-4 space-y-3">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-primary text-xs">
+                  ?
+                </span>
+                Posting Guidelines
+              </h3>
+              <ul className="space-y-2 text-xs text-muted-foreground leading-relaxed">
+                <li className="flex gap-2">
+                  <span className="mt-1 size-1.5 rounded-full bg-primary/50 shrink-0" />
+                  Remember to be human and follow community rules.
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1 size-1.5 rounded-full bg-primary/50 shrink-0" />
+                  Use Markdown to format your text beautifully.
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1 size-1.5 rounded-full bg-primary/50 shrink-0" />
+                  No spam, self-promotion, or malicious links.
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1 size-1.5 rounded-full bg-primary/50 shrink-0" />
+                  Choose the correct space for your content.
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-none bg-muted/30 border-none">
+            <CardContent className="p-4 text-xs text-muted-foreground space-y-2">
+              <p className="font-medium text-foreground">Keyboard Shortcuts</p>
+              <div className="flex justify-between">
+                <span>Bold</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-background border text-[10px] font-mono">
+                  Ctrl + B
+                </kbd>
+              </div>
+              <div className="flex justify-between">
+                <span>Italic</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-background border text-[10px] font-mono">
+                  Ctrl + I
+                </kbd>
+              </div>
+              <div className="flex justify-between">
+                <span>Submit</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-background border text-[10px] font-mono">
+                  Ctrl + Enter
+                </kbd>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
 <file path="vite.config.js">
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
@@ -4968,215 +5066,48 @@ export default defineConfig({
 });
 </file>
 
-<file path="src/layouts/root/components/site-header.jsx">
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+<file path="src/features/feed/components/feed-filters.jsx">
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useTheme } from "@/app/providers/ThemeProvider";
-import { useAuthStore } from "@/store/authStore";
-import {
-  Bell,
-  ChevronsUpDown,
-  LogOut,
-  Moon,
-  Plus,
-  Search,
-  Settings,
-  Sun,
-  LogIn,
-} from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { Flame, ListFilter, Sparkles, TrendingUp } from "lucide-react";
 
-const pageTitles = {
-  "/": "Home",
-  "/about": "About",
-  "/popular": "Popular",
-  "/trending": "Trending",
-  "/communities": "Communities",
-  "/submit": "Create Post",
-  "/saved": "Saved",
-  "/messages": "Messages",
-  "/notifications": "Notifications",
-  "/drafts": "Drafts",
-};
+const filters = [
+  { label: "Best", icon: Sparkles },
+  { label: "Hot", icon: Flame },
+  { label: "Rising", icon: TrendingUp },
+];
 
-export function SiteHeader() {
-  const { pathname } = useLocation();
-  const { theme, toggleTheme } = useTheme();
-  const { user, token } = useAuthStore();
-  const title = pageTitles[pathname] ?? "Voteria";
-
+export function FeedFilters({ activeFilter, onFilterChange }) {
   return (
-    <header className="z-40 flex h-(--header-height) w-full shrink-0 items-center border-b bg-background">
-      <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 sm:px-4 lg:px-6">
-        <div className="flex min-w-0 items-center gap-2">
-          <SidebarTrigger className="-ms-1 md:hidden" />
-          <Separator
-            orientation="vertical"
-            className="mx-2 data-[orientation=vertical]:h-4 md:hidden"
-          />
-          <Link to="/" className="flex min-w-0 items-center gap-2">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-              V
-            </span>
-            <span className="hidden min-w-0 sm:block">
-              <span className="block truncate text-sm font-semibold leading-4">
-                Voteria
-              </span>
-              <span className="block truncate text-xs text-muted-foreground">
-                {title}
-              </span>
-            </span>
-          </Link>
-        </div>
+    <div className="rounded-lg border border-border bg-card shadow-none">
+      <div className="flex items-center gap-2 overflow-x-auto p-1.5">
+        <span className="hidden shrink-0 px-2 text-xs font-medium text-muted-foreground sm:inline">
+          <ListFilter className="size-4" />
+        </span>
+        {filters.map((filter) => {
+          const Icon = filter.icon;
+          const isActive = activeFilter === filter.label;
 
-        <div className="relative mx-auto hidden w-full max-w-xl sm:block">
-          <Search className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            aria-label="Search Voteria"
-            className="h-9 bg-muted/60 ps-8"
-            placeholder="Search Voteria"
-          />
-        </div>
-
-        <div className="flex items-center justify-end gap-1.5">
-          <Button
-            className="sm:hidden"
-            variant="ghost"
-            size="icon"
-            aria-label="Search Voteria"
-          >
-            <Search className="size-4" />
-          </Button>
-
-          {token ? (
-            <>
-              <Button asChild size="sm" className="hidden sm:inline-flex">
-                <Link to="/submit">
-                  <Plus className="size-4" />
-                  Create
-                </Link>
-              </Button>
-              <Button
-                className="hidden min-[420px]:inline-flex"
-                variant="ghost"
-                size="icon"
-                aria-label="Notifications"
-              >
-                <Bell className="size-4" />
-              </Button>
-            </>
-          ) : (
-            <Button asChild size="sm" className="hidden sm:inline-flex">
-              <Link to="/login">
-                <LogIn className="size-4" />
-                Sign in
-              </Link>
+          return (
+            <Button
+              key={filter.label}
+              size="sm"
+              variant="ghost"
+              className={cn(
+                "h-8 shrink-0 px-2.5 text-muted-foreground",
+                isActive &&
+                  "bg-muted text-foreground shadow-sm hover:bg-muted hover:text-foreground",
+              )}
+              aria-pressed={isActive}
+              onClick={() => onFilterChange(filter.label)}
+            >
+              <Icon className="size-4" />
+              {filter.label}
             </Button>
-          )}
-
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Toggle theme"
-            onClick={toggleTheme}
-          >
-            {theme === "dark" ? (
-              <Sun className="size-4" />
-            ) : (
-              <Moon className="size-4" />
-            )}
-          </Button>
-
-          {token ? (
-            <AccountMenu user={user} />
-          ) : (
-            <Button variant="ghost" size="icon" asChild aria-label="Sign in">
-              <Link to="/login">
-                <Avatar className="size-7 rounded-lg">
-                  <AvatarFallback className="rounded-lg">?</AvatarFallback>
-                </Avatar>
-              </Link>
-            </Button>
-          )}
-        </div>
+          );
+        })}
       </div>
-    </header>
-  );
-}
-
-function AccountMenu({ user }) {
-  const { logout } = useAuthStore();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
-  const initials = user?.username
-    ? user.username.slice(0, 2).toUpperCase()
-    : "VT";
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="h-9 gap-2 px-1.5 sm:px-2"
-          aria-label="Open account menu"
-        >
-          <Avatar className="size-7 rounded-lg">
-            <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
-          </Avatar>
-          <span className="hidden max-w-28 truncate text-sm font-medium lg:inline">
-            {user?.username ?? "Account"}
-          </span>
-          <ChevronsUpDown className="hidden size-3.5 text-muted-foreground sm:block" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" sideOffset={8}>
-        <DropdownMenuLabel className="p-0 font-normal">
-          <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
-            <Avatar className="size-8 rounded-lg">
-              <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <p className="truncate font-medium">
-                u/{user?.username ?? "you"}
-              </p>
-            </div>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <Settings />
-            Settings
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Bell />
-            Notifications
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>
-          <LogOut />
-          Log out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    </div>
   );
 }
 </file>
@@ -5361,774 +5292,217 @@ export const useAuthStore = create((set) => ({
 }));
 </file>
 
-<file path="src/store/postsStore.js">
-import { create } from "zustand";
-import { getResponseData, postsAPI } from "../services/api";
-import { normalisePost } from "@/lib/normalise";
-import { getErrorMessage } from "@/lib/error";
-
-export const usePostsStore = create((set, get) => ({
-  posts: [],
-  currentPost: null,
-  loading: false,
-  error: null,
-  page: 1,
-  hasMore: true,
-
-  fetchPosts: async (page = 1, sort_by = "") => {
-    set({ loading: true, error: null });
-    try {
-      const { data } = await postsAPI.getAll(page, sort_by);
-      const incoming = getResponseData(data, []).map(normalisePost);
-      set({
-        posts: page === 1 ? incoming : [...get().posts, ...incoming],
-        loading: false,
-        page,
-        hasMore: incoming.length > 0,
-      });
-    } catch (err) {
-      set({
-        loading: false,
-        error: getErrorMessage(err, "Failed to load posts"),
-      });
-    }
-  },
-  fetchHome: async (page = 1, sort_by = "") => {
-    set({ loading: true, error: null });
-    try {
-      const { data } = await postsAPI.getHomePage(page, sort_by);
-      const incoming = getResponseData(data, []).map(normalisePost);
-      set({
-        posts: page === 1 ? incoming : [...get().posts, ...incoming],
-        loading: false,
-        page,
-        hasMore: incoming.length > 0,
-      });
-    } catch (err) {
-      set({
-        loading: false,
-        error: getErrorMessage(err, "Failed to load posts"),
-      });
-    }
-  },
-
-  fetchPost: async (postId) => {
-    set({ currentPost: null, loading: true, error: null });
-    try {
-      const { data } = await postsAPI.getById(postId);
-      set({
-        currentPost: normalisePost(getResponseData(data, null)),
-        loading: false,
-      });
-    } catch (err) {
-      set({
-        loading: false,
-        error: getErrorMessage(err, "Failed to load post"),
-      });
-    }
-  },
-
-  createPost: async (subId, title, content, sort_by = "") => {
-    try {
-      await postsAPI.create(subId, title, content);
-      // Refresh first page
-      await get().fetchPosts(1, sort_by);
-      return { success: true };
-    } catch (err) {
-      const msg = getErrorMessage(err, "Failed to create post");
-      return { success: false, error: msg };
-    }
-  },
-
-  vote: async (postId, direction) => {
-    const existing =
-      get().posts.find((p) => String(p.id) === String(postId)) ??
-      (String(get().currentPost?.id) === String(postId)
-        ? get().currentPost
-        : null);
-    const prev = existing?.userVote ?? 0;
-    const next = prev === direction ? 0 : direction;
-
-    // Optimistic update
-    const update = (posts, fromVote, toVote) =>
-      posts.map((p) => {
-        if (String(p.id) !== String(postId)) return p;
-        const delta = toVote - fromVote;
-        return {
-          ...p,
-          score: (p.score ?? p.votes ?? 0) + delta,
-          votes: (p.votes ?? p.score ?? 0) + delta,
-          userVote: toVote,
-          _userVote: toVote,
-        };
-      });
-
-    set((s) => ({ posts: update(s.posts, prev, next) }));
-    if (get().currentPost && String(get().currentPost.id) === String(postId)) {
-      set((s) => ({ currentPost: update([s.currentPost], prev, next)[0] }));
-    }
-
-    try {
-      if (next === 0) {
-        await postsAPI.deleteVote(postId);
-      } else if (direction === 1) {
-        await postsAPI.upvote(postId);
-      } else {
-        await postsAPI.downvote(postId);
-      }
-    } catch {
-      set((s) => ({ posts: update(s.posts, next, prev) }));
-      if (
-        get().currentPost &&
-        String(get().currentPost.id) === String(postId)
-      ) {
-        set((s) => ({ currentPost: update([s.currentPost], next, prev)[0] }));
-      }
-    }
-  },
-}));
-</file>
-
-<file path="src/app/router.jsx">
-import { createBrowserRouter } from "react-router-dom";
-import RootLayout from "../layouts/RootLayout";
-import HomePage from "../pages/HomePage";
-import AboutPage from "../pages/AboutPage";
-import NotFoundPage from "../pages/NotFoundPage";
-import PostPage from "../pages/PostPage";
-import AuthPage from "../pages/AuthPage";
-import SubmitPage from "../pages/SubmitPage";
-
-export const router = createBrowserRouter([
-  {
-    path: "/login",
-    element: <AuthPage />,
-  },
-  {
-    path: "/",
-    element: <RootLayout />,
-    children: [
-      {
-        index: true,
-        element: <HomePage />,
-      },
-      {
-        path: "about",
-        element: <AboutPage />,
-      },
-      {
-        path: "post/:postId",
-        element: <PostPage />,
-      },
-      {
-        path: "submit",
-        element: <SubmitPage />,
-      },
-    ],
-  },
-  {
-    path: "*",
-    element: <NotFoundPage />,
-  },
-]);
-</file>
-
-<file path="src/features/feed/components/feed-right-rail.jsx">
-import { useEffect } from "react";
-import { Badge } from "@/components/ui/badge";
+<file path="src/layouts/root/components/site-header.jsx">
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useTheme } from "@/app/providers/ThemeProvider";
 import { useAuthStore } from "@/store/authStore";
-import { useSpacesStore } from "@/store/spacesStore";
+import {
+  Bell,
+  ChevronsUpDown,
+  LogOut,
+  Moon,
+  Plus,
+  Search,
+  Settings,
+  Sun,
+  LogIn,
+} from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
-export function FeedRightRail() {
-  const token = useAuthStore((state) => state.token);
-  const {
-    spaces,
-    subscribedSpaces,
-    loading,
-    subscriptionsLoading,
-    fetchSpaces,
-    fetchSubscriptions,
-    subscribeToSpace,
-  } = useSpacesStore();
+const pageTitles = {
+  "/": "Home",
+  "/about": "About",
+  "/popular": "Popular",
+  "/trending": "Trending",
+  "/communities": "Communities",
+  "/submit": "Create Post",
+  "/saved": "Saved",
+  "/messages": "Messages",
+  "/notifications": "Notifications",
+  "/drafts": "Drafts",
+};
 
-  useEffect(() => {
-    if (spaces.length === 0) {
-      fetchSpaces(1);
-    }
-  }, [spaces.length, fetchSpaces]);
-
-  useEffect(() => {
-    if (token && subscribedSpaces.length === 0 && !subscriptionsLoading) {
-      fetchSubscriptions();
-    }
-  }, [
-    token,
-    subscribedSpaces.length,
-    subscriptionsLoading,
-    fetchSubscriptions,
-  ]);
-
-  const subscribedIds = new Set(subscribedSpaces.map((space) => space.id));
-
-  const growingSpaces = spaces.length
-    ? [...spaces]
-        .sort((a, b) => b.subscribersCount - a.subscribersCount)
-        .slice(0, 6)
-    : spaces.map((space) => ({
-        name: space.name,
-        members: space.members,
-      }));
-
-  const handleJoin = async (spaceId) => {
-    await subscribeToSpace(spaceId);
-  };
+export function SiteHeader() {
+  const { pathname } = useLocation();
+  const { theme, toggleTheme } = useTheme();
+  const { user, token } = useAuthStore();
+  const title = pageTitles[pathname] ?? "Voteria";
 
   return (
-    <aside className="max-h-[calc(100svh-var(--header-height)-2.5rem)] space-y-3 overflow-y-auto pe-1">
-      <Card className="shadow-none">
-        <CardHeader className="space-y-1 p-4">
-          <p className="text-xs font-medium uppercase text-muted-foreground">
-            Voteria
-          </p>
-          <h2 className="text-base font-semibold text-card-foreground">
-            Community front page
-          </h2>
-          <p className="text-sm leading-6 text-muted-foreground">
-            Follow spaces, vote on posts, and keep the feed focused around
-            discussions that are active right now.
-          </p>
-        </CardHeader>
-        <CardContent className="p-4 pt-0">
-          <Button className="w-full">Create post</Button>
-        </CardContent>
-      </Card>
+    <header className="z-40 flex h-(--header-height) w-full shrink-0 items-center border-b bg-background">
+      <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 sm:px-4 lg:px-6">
+        <div className="flex min-w-0 items-center gap-2">
+          <SidebarTrigger className="-ms-1 md:hidden" />
+          <Separator
+            orientation="vertical"
+            className="mx-2 data-[orientation=vertical]:h-4 md:hidden"
+          />
+          <Link to="/" className="flex min-w-0 items-center gap-2">
+            <img
+              src="/Voteria.png"
+              alt="Voteria"
+              className="size-8 shrink-0 rounded-lg object-cover"
+            />
+            <span className="hidden min-w-0 sm:block">
+              <span className="block truncate text-sm font-semibold leading-4">
+                Voteria
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {title}
+              </span>
+            </span>
+          </Link>
+        </div>
 
-      <Card className="shadow-none">
-        <CardHeader className="flex flex-row items-center justify-between gap-3 p-4">
-          <div>
-            <p className="text-xs font-medium uppercase text-muted-foreground">
-              Discover
-            </p>
-            <h2 className="text-base font-semibold text-card-foreground">
-              Growing spaces
-            </h2>
-          </div>
-          <Badge variant="accent">Live</Badge>
-        </CardHeader>
-        <CardContent className="space-y-1 p-2 pt-0">
-          {growingSpaces.map((space, index) => (
-            <div key={space.id ?? space.name}>
-              <div className="flex items-center justify-between gap-3 rounded-lg p-2 hover:bg-muted/70">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-card-foreground">
-                    v/{space.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {space.subscribersCount != null
-                      ? `${space.subscribersCount} members`
-                      : `${space.members} members`}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant={
-                    subscribedIds.has(space.id) ? "secondary" : "outline"
-                  }
-                  disabled={!token || subscribedIds.has(space.id)}
-                  onClick={() => handleJoin(space.id)}
-                >
-                  {subscribedIds.has(space.id) ? "Joined" : "Join"}
-                </Button>
-              </div>
-              {index < growingSpaces.length - 1 ? <Separator /> : null}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    </aside>
-  );
-}
-</file>
+        <div className="relative mx-auto hidden w-full max-w-xl sm:block">
+          <Search className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            aria-label="Search Voteria"
+            className="h-9 bg-muted/60 ps-8"
+            placeholder="Search Voteria"
+          />
+        </div>
 
-<file path="src/index.css">
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
-@import "@fontsource-variable/inter";
+        <div className="flex items-center justify-end gap-1.5">
+          <Button
+            className="sm:hidden"
+            variant="ghost"
+            size="icon"
+            aria-label="Search Voteria"
+          >
+            <Search className="size-4" />
+          </Button>
 
-@custom-variant dark (&:is(.dark *));
+          {token ? (
+            <>
+              <Button asChild size="sm" className="hidden sm:inline-flex">
+                <Link to="/submit">
+                  <Plus className="size-4" />
+                  Create
+                </Link>
+              </Button>
+              <Button
+                className="hidden min-[420px]:inline-flex"
+                variant="ghost"
+                size="icon"
+                aria-label="Notifications"
+              >
+                <Bell className="size-4" />
+              </Button>
+            </>
+          ) : (
+            <Button asChild size="sm" className="hidden sm:inline-flex">
+              <Link to="/login">
+                <LogIn className="size-4" />
+                Sign in
+              </Link>
+            </Button>
+          )}
 
-html {
-}
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Toggle theme"
+            onClick={toggleTheme}
+          >
+            {theme === "dark" ? (
+              <Sun className="size-4" />
+            ) : (
+              <Moon className="size-4" />
+            )}
+          </Button>
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-#root {
-  min-height: 100vh;
-}
-
-:root {
-  --background: rgb(255, 255, 255);
-  --foreground: rgb(26, 26, 27);
-  --card: rgb(255, 255, 255);
-  --card-foreground: rgb(26, 26, 27);
-  --popover: rgb(255, 255, 255);
-  --popover-foreground: rgb(26, 26, 27);
-  --primary: rgb(255, 69, 0);
-  --primary-foreground: rgb(255, 255, 255);
-  --secondary: rgb(0, 121, 211);
-  --secondary-foreground: rgb(255, 255, 255);
-  --muted: rgb(246, 247, 248);
-  --muted-foreground: rgb(124, 124, 124);
-  --accent: rgb(237, 239, 241);
-  --accent-foreground: rgb(28, 28, 28);
-  --destructive: rgb(234, 0, 39);
-  --destructive-foreground: rgb(255, 255, 255);
-  --border: rgb(237, 239, 241);
-  --input: rgb(246, 247, 248);
-  --ring: rgb(0, 121, 211);
-  --chart-1: rgb(255, 69, 0);
-  --chart-2: rgb(0, 121, 211);
-  --chart-3: rgb(255, 176, 0);
-  --chart-4: rgb(130, 117, 255);
-  --chart-5: rgb(70, 209, 96);
-  --sidebar: rgb(255, 255, 255);
-  --sidebar-foreground: rgb(28, 28, 28);
-  --sidebar-primary: rgb(255, 69, 0);
-  --sidebar-primary-foreground: rgb(255, 255, 255);
-  --sidebar-accent: rgb(246, 247, 248);
-  --sidebar-accent-foreground: rgb(255, 69, 0);
-  --sidebar-border: rgb(237, 239, 241);
-  --sidebar-ring: rgb(0, 121, 211);
-  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
-  --font-serif: "Noto Serif", serif;
-  --font-mono: "IBM Plex Mono", monospace;
-  --radius: 1.25rem;
-  --shadow-x: 0px;
-  --shadow-y: 2px;
-  --shadow-blur: 10px;
-  --shadow-spread: 0px;
-  --shadow-opacity: 0.05;
-  --shadow-color: #000000;
-  --shadow-2xs: 0px 2px 10px 0px hsl(0 0% 0% / 0.03);
-  --shadow-xs: 0px 2px 10px 0px hsl(0 0% 0% / 0.03);
-  --shadow-sm:
-    0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05);
-  --shadow:
-    0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05);
-  --shadow-md:
-    0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 2px 4px -1px hsl(0 0% 0% / 0.05);
-  --shadow-lg:
-    0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 4px 6px -1px hsl(0 0% 0% / 0.05);
-  --shadow-xl:
-    0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 8px 10px -1px hsl(0 0% 0% / 0.05);
-  --shadow-2xl: 0px 2px 10px 0px hsl(0 0% 0% / 0.13);
-  --tracking-normal: -0.01em;
-  --spacing: 0.25rem;
-  --scrollbar-track: transparent;
-  --scrollbar-thumb: color-mix(in srgb, var(--foreground) 18%, transparent);
-  --scrollbar-thumb-hover: color-mix(
-    in srgb,
-    var(--foreground) 30%,
-    transparent
+          {token ? (
+            <AccountMenu user={user} />
+          ) : (
+            <Button variant="ghost" size="icon" asChild aria-label="Sign in">
+              <Link to="/login">
+                <Avatar className="size-7 rounded-lg">
+                  <AvatarFallback className="rounded-lg">?</AvatarFallback>
+                </Avatar>
+              </Link>
+            </Button>
+          )}
+        </div>
+      </div>
+    </header>
   );
 }
 
-.dark {
-  --background: rgb(3, 3, 3);
-  --foreground: rgb(215, 218, 220);
-  --card: rgb(26, 26, 27);
-  --card-foreground: rgb(215, 218, 220);
-  --popover: rgb(26, 26, 27);
-  --popover-foreground: rgb(215, 218, 220);
-  --primary: rgb(255, 69, 0);
-  --primary-foreground: rgb(255, 255, 255);
-  --secondary: rgb(215, 218, 220);
-  --secondary-foreground: rgb(26, 26, 27);
-  --muted: rgb(39, 39, 41);
-  --muted-foreground: rgb(129, 131, 132);
-  --accent: rgb(45, 45, 46);
-  --accent-foreground: rgb(255, 255, 255);
-  --destructive: rgb(255, 88, 91);
-  --destructive-foreground: rgb(255, 255, 255);
-  --border: rgb(52, 53, 54);
-  --input: rgb(39, 39, 41);
-  --ring: rgb(215, 218, 220);
-  --chart-1: rgb(255, 69, 0);
-  --chart-2: rgb(0, 121, 211);
-  --chart-3: rgb(255, 176, 0);
-  --chart-4: rgb(130, 117, 255);
-  --chart-5: rgb(70, 209, 96);
-  --sidebar: rgb(26, 26, 27);
-  --sidebar-foreground: rgb(215, 218, 220);
-  --sidebar-primary: rgb(255, 69, 0);
-  --sidebar-primary-foreground: rgb(255, 255, 255);
-  --sidebar-accent: rgb(39, 39, 41);
-  --sidebar-accent-foreground: rgb(255, 69, 0);
-  --sidebar-border: rgb(52, 53, 54);
-  --sidebar-ring: rgb(215, 218, 220);
-  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
-  --font-serif: "Noto Serif", serif;
-  --font-mono: "IBM Plex Mono", monospace;
-  --radius: 1.25rem;
-  --shadow-x: 0px;
-  --shadow-y: 4px;
-  --shadow-blur: 20px;
-  --shadow-spread: 0px;
-  --shadow-opacity: 0.5;
-  --shadow-color: #000000;
-  --shadow-2xs: 0px 4px 20px 0px hsl(0 0% 0% / 0.25);
-  --shadow-xs: 0px 4px 20px 0px hsl(0 0% 0% / 0.25);
-  --shadow-sm:
-    0px 4px 20px 0px hsl(0 0% 0% / 0.5), 0px 1px 2px -1px hsl(0 0% 0% / 0.5);
-  --shadow:
-    0px 4px 20px 0px hsl(0 0% 0% / 0.5), 0px 1px 2px -1px hsl(0 0% 0% / 0.5);
-  --shadow-md:
-    0px 4px 20px 0px hsl(0 0% 0% / 0.5), 0px 2px 4px -1px hsl(0 0% 0% / 0.5);
-  --shadow-lg:
-    0px 4px 20px 0px hsl(0 0% 0% / 0.5), 0px 4px 6px -1px hsl(0 0% 0% / 0.5);
-  --shadow-xl:
-    0px 4px 20px 0px hsl(0 0% 0% / 0.5), 0px 8px 10px -1px hsl(0 0% 0% / 0.5);
-  --shadow-2xl: 0px 4px 20px 0px hsl(0 0% 0% / 1.25);
-  --scrollbar-thumb: color-mix(in srgb, var(--foreground) 22%, transparent);
-  --scrollbar-thumb-hover: color-mix(
-    in srgb,
-    var(--foreground) 36%,
-    transparent
-  );
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
-  --font-serif: var(--font-serif);
-
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-
-  --shadow-2xs: var(--shadow-2xs);
-  --shadow-xs: var(--shadow-xs);
-  --shadow-sm: var(--shadow-sm);
-  --shadow: var(--shadow);
-  --shadow-md: var(--shadow-md);
-  --shadow-lg: var(--shadow-lg);
-  --shadow-xl: var(--shadow-xl);
-  --shadow-2xl: var(--shadow-2xl);
-
-  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
-  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
-  --tracking-normal: var(--tracking-normal);
-  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
-  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
-  --tracking-widest: calc(var(--tracking-normal) + 0.1em);
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-  button:not(:disabled),
-  [role="button"]:not(:disabled) {
-    cursor: pointer;
-  }
-  html {
-    @apply font-sans;
-  }
-
-  * {
-    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
-    scrollbar-width: thin;
-  }
-
-  *::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  *::-webkit-scrollbar-track {
-    background: var(--scrollbar-track);
-  }
-
-  *::-webkit-scrollbar-thumb {
-    background-color: var(--scrollbar-thumb);
-    border: 2px solid transparent;
-    border-radius: 999px;
-    background-clip: content-box;
-  }
-
-  *::-webkit-scrollbar-thumb:hover {
-    background-color: var(--scrollbar-thumb-hover);
-  }
-
-  *::-webkit-scrollbar-corner {
-    background: transparent;
-  }
-}
-</file>
-
-<file path="src/pages/PostPage.jsx">
-import { useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  ArrowUp,
-  ArrowDown,
-  Bookmark,
-  Share2,
-  ArrowLeft,
-  Calendar,
-} from "lucide-react";
-import { CommentThread } from "@/features/comments";
-import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
-import { useAuthStore } from "@/store/authStore";
-import { usePostsStore } from "@/store/postsStore";
-import { cn } from "@/lib/utils";
-
-export default function PostPage() {
-  const { postId } = useParams();
-  const { currentPost, loading, error, fetchPost, vote } = usePostsStore();
-  const token = useAuthStore((s) => s.token);
+function AccountMenu({ user }) {
+  const { logout } = useAuthStore();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchPost(postId);
-  }, [fetchPost, postId]);
-
-  const handleVote = (dir) => {
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-    vote(postId, dir);
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
   };
 
-  if (loading && !currentPost) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-4">
-        <Skeleton className="h-8 w-24" />
-        <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
-          <Card className="shadow-none">
-            <div className="p-6 space-y-4">
-              <div className="flex gap-3">
-                <Skeleton className="size-10 rounded-full" />
-                <Skeleton className="h-4 w-48" />
-              </div>
-              <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-2/3" />
-            </div>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-4">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/">
-            <ArrowLeft className="size-4" /> Back
-          </Link>
-        </Button>
-        <p className="text-sm text-destructive">{error}</p>
-      </div>
-    );
-  }
-
-  if (!currentPost) return null;
-
-  const userVote = currentPost.userVote ?? 0;
-  const community = currentPost.community || "general";
-  const author = currentPost.author ?? "u/unknown";
-  const score = currentPost.score ?? 0;
-  const tags = currentPost.tags ?? [];
-  const createdAt = currentPost.createdAt;
+  const initials = user?.username
+    ? user.username.slice(0, 2).toUpperCase()
+    : "VT";
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-      <Button variant="ghost" size="sm" asChild className="-mb-2">
-        <Link to="/">
-          <ArrowLeft className="size-4" /> Back to Feed
-        </Link>
-      </Button>
-
-      {/* Fixed sidebar width (320px), fluid main column */}
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        {/* Main Content Column */}
-        <div className="min-w-0 space-y-6">
-          {/* Post Card */}
-          <Card className="shadow-none overflow-hidden w-full">
-            <div className="p-5 sm:p-6">
-              {/* Meta */}
-              ...
-              {/* Title */}
-              <h1 className="mt-3 text-xl sm:text-2xl font-bold leading-tight text-card-foreground break-words">
-                {currentPost.title}
-              </h1>
-              {/* Tags */}
-              {tags.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {tags.map((tag) => (
-                    <Badge key={tag} variant="secondary">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              {/* Body (Markdown) */}
-              {currentPost.content && (
-                <div className="mt-4">
-                  <MarkdownRenderer content={currentPost.content} />
-                </div>
-              )}
-              <Separator className="my-5" />
-              {/* Actions */}
-              <div className="flex items-center gap-2">
-                <div className="flex items-center rounded-lg bg-muted p-0.5">
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    aria-label="Upvote"
-                    onClick={() => handleVote(1)}
-                    className={cn(userVote === 1 && "text-primary")}
-                  >
-                    <ArrowUp className="size-4" />
-                  </Button>
-                  <span
-                    className={cn(
-                      "min-w-8 px-1 text-center text-sm font-semibold tabular-nums",
-                      userVote === 1 && "text-primary",
-                      userVote === -1 && "text-destructive",
-                    )}
-                  >
-                    {score}
-                  </span>
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    aria-label="Downvote"
-                    onClick={() => handleVote(-1)}
-                    className={cn(userVote === -1 && "text-destructive")}
-                  >
-                    <ArrowDown className="size-4" />
-                  </Button>
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="px-2 text-muted-foreground"
-                >
-                  <Share2 className="size-4 me-1.5" /> Share
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="px-2 text-muted-foreground"
-                >
-                  <Bookmark className="size-4 me-1.5" /> Save
-                </Button>
-              </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          className="h-9 gap-2 px-1.5 sm:px-2"
+          aria-label="Open account menu"
+        >
+          <Avatar className="size-7 rounded-lg">
+            <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
+          </Avatar>
+          <span className="hidden max-w-28 truncate text-sm font-medium lg:inline">
+            {user?.username ?? "Account"}
+          </span>
+          <ChevronsUpDown className="hidden size-3.5 text-muted-foreground sm:block" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="end" sideOffset={8}>
+        <DropdownMenuLabel className="p-0 font-normal">
+          <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
+            <Avatar className="size-8 rounded-lg">
+              <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="truncate font-medium">
+                u/{user?.username ?? "you"}
+              </p>
             </div>
-          </Card>
-
-          {/* Comments Section Card */}
-          <Card className="shadow-none">
-            <div className="p-5 sm:p-6">
-              <CommentThread postId={String(currentPost.id)} />
-            </div>
-          </Card>
-        </div>
-
-        {/* Right Sidebar (Desktop Only) */}
-        <aside className="hidden lg:block space-y-4">
-          <Card className="shadow-none sticky top-20">
-            <div className="p-4 space-y-4">
-              <div className="flex items-center gap-3">
-                <Avatar className="size-10">
-                  <AvatarFallback>
-                    {community.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-bold text-foreground">v/{community}</p>
-                  <p className="text-xs text-muted-foreground">Community</p>
-                </div>
-              </div>
-              <Separator />
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div>
-                  <p className="text-lg font-bold text-foreground">1.2k</p>
-                  <p className="text-xs text-muted-foreground">Members</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-foreground">45</p>
-                  <p className="text-xs text-muted-foreground">Online</p>
-                </div>
-              </div>
-              <Separator />
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Calendar className="size-4" />
-                <span>Created Jan 1, 2024</span>
-              </div>
-              <Button className="w-full" variant="outline">
-                Join Community
-              </Button>
-            </div>
-          </Card>
-        </aside>
-      </div>
-    </div>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem>
+            <Settings />
+            Settings
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <Bell />
+            Notifications
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleLogout}>
+          <LogOut />
+          Log out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 </file>
@@ -6390,113 +5764,53 @@ function findById(list, id) {
 }
 </file>
 
-<file path="src/store/spacesStore.js">
-import { create } from "zustand";
-import { getResponseData, spacesAPI } from "../services/api";
-import { getErrorMessage } from "@/lib/error";
+<file path="src/app/router.jsx">
+import { createBrowserRouter } from "react-router-dom";
+import RootLayout from "../layouts/RootLayout";
+import HomePage from "../pages/HomePage";
+import AboutPage from "../pages/AboutPage";
+import NotFoundPage from "../pages/NotFoundPage";
+import PostPage from "../pages/PostPage";
+import AuthPage from "../pages/AuthPage";
+import SubmitPage from "../pages/SubmitPage";
+import SpacePage from "../pages/SpacePage";
 
-function slugify(input) {
-  if (!input) return "";
-  return input
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .substring(0, 50);
-}
-
-function normaliseSpace(space) {
-  return {
-    ...space,
-    id: space.ID,
-    username: space.Username,
-    title: space.Title,
-    description: space.Description,
-    subscribersCount: space.SubscribersCount,
-    views: space.Views,
-  };
-}
-
-export const useSpacesStore = create((set, get) => ({
-  spaces: [],
-  subscribedSpaces: [],
-  loading: false,
-  subscriptionsLoading: false,
-  error: null,
-  subscriptionsError: null,
-  page: 1,
-  hasMore: true,
-  subscribeLoading: false,
-
-  fetchSpaces: async (page = 1, sort_by = "") => {
-    set({ loading: true, error: null });
-    try {
-      const { data } = await spacesAPI.getAll(page, sort_by);
-      const incoming = getResponseData(data, []).map(normaliseSpace);
-      set({
-        spaces: page === 1 ? incoming : [...get().spaces, ...incoming],
-        loading: false,
-        page,
-        hasMore: incoming.length > 0,
-      });
-    } catch (err) {
-      set({
-        loading: false,
-        error: getErrorMessage(err, "Failed to load spaces"),
-      });
-    }
+export const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <AuthPage />,
   },
-
-  fetchSubscriptions: async () => {
-    set({ subscriptionsLoading: true, subscriptionsError: null });
-    try {
-      const { data } = await spacesAPI.getSubscriptions();
-      const incoming = getResponseData(data, []).map(normaliseSpace);
-      set({ subscribedSpaces: incoming, subscriptionsLoading: false });
-    } catch (err) {
-      set({
-        subscriptionsLoading: false,
-        subscriptionsError: getErrorMessage(
-          err,
-          "Failed to load subscriptions",
-        ),
-      });
-    }
+  {
+    path: "/",
+    element: <RootLayout />,
+    children: [
+      {
+        index: true,
+        element: <HomePage />,
+      },
+      {
+        path: "about",
+        element: <AboutPage />,
+      },
+      {
+        path: "post/:postId",
+        element: <PostPage />,
+      },
+      {
+        path: "submit",
+        element: <SubmitPage />,
+      },
+      {
+        path: "space/:spaceId",
+        element: <SpacePage />,
+      },
+    ],
   },
-
-  subscribeToSpace: async (spaceId) => {
-    set({ subscribeLoading: true, error: null });
-    try {
-      await spacesAPI.subscribe(spaceId);
-      await get().fetchSubscriptions();
-      await get().fetchSpaces(1);
-      set({ subscribeLoading: false });
-      return { success: true };
-    } catch (err) {
-      const msg = getErrorMessage(err, "Failed to subscribe to space");
-      set({ subscribeLoading: false, error: msg });
-      return { success: false, error: msg };
-    }
+  {
+    path: "*",
+    element: <NotFoundPage />,
   },
-
-  createSpace: async (title, description) => {
-    set({ createLoading: true, createError: null });
-    try {
-      const username = slugify(title);
-      await spacesAPI.create(title, description, username);
-      await get().fetchSpaces(1);
-      set({ createLoading: false });
-      return { success: true };
-    } catch (err) {
-      const msg = getErrorMessage(err, "Failed to create space");
-      set({ createLoading: false, createError: msg });
-      return { success: false, error: msg };
-    }
-  },
-}));
-
-export default useSpacesStore;
+]);
 </file>
 
 <file path="src/features/feed/components/feed-post-card.jsx">
@@ -6639,234 +5953,819 @@ export function FeedPostCard({ post }) {
 }
 </file>
 
-<file path="src/services/api.js">
-import axios from "axios";
+<file path="src/features/feed/components/feed-right-rail.jsx">
+import { useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { useAuthStore } from "@/store/authStore";
+import { useSpacesStore } from "@/store/spacesStore";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api/v1";
-const ACCESS_TOKEN_KEY = "access_token";
-const REFRESH_TOKEN_KEY = "refresh_token";
-const ACCESS_TOKEN_EXPIRES_AT_KEY = "access_token_expires_at";
-const USER_KEY = "user";
+export function FeedRightRail() {
+  const token = useAuthStore((state) => state.token);
+  const {
+    spaces,
+    subscribedSpaces,
+    loading,
+    subscriptionsLoading,
+    fetchSpaces,
+    fetchSubscriptions,
+    subscribeToSpace,
+  } = useSpacesStore();
 
-export function getStoredAccessToken() {
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
-}
-
-export function storeAuthSession({
-  accessToken,
-  refreshToken,
-  expiresAt,
-  user,
-}) {
-  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-
-  if (refreshToken) {
-    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-  } else {
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-  }
-
-  if (expiresAt) {
-    localStorage.setItem(ACCESS_TOKEN_EXPIRES_AT_KEY, String(expiresAt));
-  } else {
-    localStorage.removeItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
-  }
-
-  if (user) {
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(USER_KEY);
-  }
-}
-
-export function clearAuthSession() {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
-  localStorage.removeItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
-  localStorage.removeItem(USER_KEY);
-}
-
-function shouldClearAuth(status, code) {
-  return status === 401 || code === "invalid_token";
-}
-
-function redirectToLogin() {
-  if (window.location.pathname !== "/login") {
-    window.location.href = "/login";
-  }
-}
-
-function getAppStatus(response) {
-  const status = response?.data?.status;
-  return typeof status === "number" ? status : 0;
-}
-
-function buildAppError(response) {
-  const payload = response?.data;
-  const errors = payload?.errors;
-  const message =
-    errors?.non_field || payload?.msg || payload?.message || "Request failed";
-  const error = new Error(message);
-  error.response = response;
-  return error;
-}
-
-const api = axios.create({
-  baseURL: BASE_URL,
-  headers: { "Content-Type": "application/json" },
-});
-
-// Attach JWT token to every request
-api.interceptors.request.use((config) => {
-  const token = getStoredAccessToken();
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
-
-// The backend wraps application status in the JSON body while returning HTTP 200.
-api.interceptors.response.use(
-  (res) => {
-    const appStatus = getAppStatus(res);
-    if (appStatus >= 400) {
-      if (shouldClearAuth(appStatus, res.data?.code)) {
-        clearAuthSession();
-        redirectToLogin();
-      }
-      return Promise.reject(buildAppError(res));
+  useEffect(() => {
+    if (spaces.length === 0) {
+      fetchSpaces(1);
     }
-    return res;
-  },
-  (err) => {
-    if (shouldClearAuth(err.response?.status, err.response?.data?.code)) {
-      clearAuthSession();
-      redirectToLogin();
+  }, [spaces.length, fetchSpaces]);
+
+  useEffect(() => {
+    if (token && subscribedSpaces.length === 0 && !subscriptionsLoading) {
+      fetchSubscriptions();
     }
-    return Promise.reject(err);
-  },
-);
+  }, [
+    token,
+    subscribedSpaces.length,
+    subscriptionsLoading,
+    fetchSubscriptions,
+  ]);
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
-export const authAPI = {
-  login: (username, password) =>
-    api.post("/users/login", { username, password }),
-  register: (username, password) =>
-    api.post("/users/register", { username, password }),
-};
+  const subscribedIds = new Set(subscribedSpaces.map((space) => space.id));
 
-// ─── Spaces (Communities) ────────────────────────────────────────────────────
-export const spacesAPI = {
-  getAll: (page = 1, sort_by = "") =>
-    api.get("/spaces", { params: { page, sort_by } }),
-  getById: (spaceId) => api.get(`/spaces/${spaceId}`),
-  getSubscriptions: () => api.get("/spaces/subscriptions"),
-  create: (title, description, username) =>
-    api.post("/spaces", { title, description, username }),
-  update: (spaceId, title, description) =>
-    api.put(`/spaces/${spaceId}`, { title, description }),
-  delete: (spaceId) => api.delete(`/spaces/${spaceId}`),
-  subscribe: (spaceId) => api.post(`/spaces/${spaceId}/subscribe`),
-  unsubscribe: (spaceId) => api.post(`/spaces/${spaceId}/unsubscribe`),
-};
+  const growingSpaces = spaces.length
+    ? [...spaces]
+        .sort((a, b) => b.subscribersCount - a.subscribersCount)
+        .slice(0, 6)
+    : spaces.map((space) => ({
+        name: space.name,
+        members: space.members,
+      }));
 
-// ─── Posts ───────────────────────────────────────────────────────────────────
-export const postsAPI = {
-  getAll: (page = 1, sort_by = "") =>
-    api.get("/posts", { params: { page, sort_by } }),
-  getHomePage: (page = 1, sort_by = "") =>
-    api.get("/posts/home", { params: { page, sort_by } }),
-  getById: (postId) => api.get(`/posts/${postId}`),
-  create: (subId, title, content) =>
-    api.post(`/spaces/${subId}/posts`, { title, content }),
-  update: (postId, title, content) =>
-    api.put(`/posts/${postId}`, { title, content }),
-  delete: (postId) => api.delete(`/posts/${postId}`),
-  upvote: (postId) => api.post(`/posts/${postId}/upvote`),
-  downvote: (postId) => api.post(`/posts/${postId}/downvote`),
-  deleteVote: (postId) => api.delete(`/posts/${postId}/votes`),
-};
+  const handleJoin = async (spaceId) => {
+    await subscribeToSpace(spaceId);
+  };
 
-// ─── Comments ────────────────────────────────────────────────────────────────
-export const commentsAPI = {
-  // Backend returns flat list; parent_id=0 means top-level
-  getAll: (postId, page = 1, sortBy = "") =>
-    api.get(`/posts/${postId}/comments`, {
-      params: { page, order_by: sortBy },
-    }),
-  getById: (commentId) => api.get(`/comments/${commentId}`),
-  create: (postId, content, parent_id = 0) =>
-    api.post(`/posts/${postId}/comments`, { content, parent_id }),
-  update: (commentId, content) =>
-    api.put(`/comments/${commentId}`, { content }),
-  delete: (commentId) => api.delete(`/comments/${commentId}`),
-  upvote: (commentId) => api.post(`/comments/${commentId}/upvote`),
-  downvote: (commentId) => api.post(`/comments/${commentId}/downvote`),
-  deleteVote: (commentId) => api.delete(`/comments/${commentId}/votes`),
-};
+  return (
+    <aside className="max-h-[calc(100svh-var(--header-height)-2.5rem)] space-y-3 overflow-y-auto pe-1">
+      <Card className="shadow-none">
+        <CardHeader className="space-y-1 p-4">
+          <p className="text-xs font-medium uppercase text-muted-foreground">
+            Voteria
+          </p>
+          <h2 className="text-base font-semibold text-card-foreground">
+            Community front page
+          </h2>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Follow spaces, vote on posts, and keep the feed focused around
+            discussions that are active right now.
+          </p>
+        </CardHeader>
+        {/* <CardContent className="p-4 pt-0">
+          <Button className="w-full">Create post</Button>
+        </CardContent> */}
+      </Card>
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Build a nested tree from a flat comment list using parent_id */
-export function getResponseData(payload, fallback = null) {
-  return payload?.data ?? fallback;
+      <Card className="shadow-none">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 p-4">
+          <div>
+            <p className="text-xs font-medium uppercase text-muted-foreground">
+              Discover
+            </p>
+            <h2 className="text-base font-semibold text-card-foreground">
+              Growing spaces
+            </h2>
+          </div>
+          <Badge variant="accent">Live</Badge>
+        </CardHeader>
+        <CardContent className="space-y-1 p-2 pt-0">
+          {growingSpaces.map((space, index) => (
+            <div key={space.id ?? space.name}>
+              <div className="flex items-center justify-between gap-3 rounded-lg p-2 hover:bg-muted/70">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-card-foreground">
+                    v/{space.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {space.subscribersCount != null
+                      ? `${space.subscribersCount} members`
+                      : `${space.members} members`}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant={
+                    subscribedIds.has(space.id) ? "secondary" : "outline"
+                  }
+                  disabled={!token || subscribedIds.has(space.id)}
+                  onClick={() => handleJoin(space.id)}
+                >
+                  {subscribedIds.has(space.id) ? "Joined" : "Join"}
+                </Button>
+              </div>
+              {index < growingSpaces.length - 1 ? <Separator /> : null}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </aside>
+  );
 }
-
-export {
-  buildCommentTree,
-  normalisePost,
-  normaliseComment,
-  formatRelativeDate,
-} from "@/lib/normalise";
-
-export default api;
 </file>
 
-<file path="package.json">
-{
-  "name": "voteria",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@fontsource-variable/inter": "^5.2.8",
-    "@tailwindcss/vite": "^4.2.3",
-    "axios": "^1.17.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "lucide-react": "^1.17.0",
-    "next-themes": "^0.4.6",
-    "radix-ui": "^1.4.3",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "react-markdown": "^10.1.0",
-    "react-router-dom": "^7.14.1",
-    "recharts": "3.8.0",
-    "remark-gfm": "^4.0.1",
-    "shadcn": "^4.8.3",
-    "sonner": "^2.0.7",
-    "tailwind-merge": "^3.6.0",
-    "tailwindcss": "^4.2.3",
-    "tw-animate-css": "^1.4.0",
-    "vaul": "^1.1.2",
-    "zustand": "^5.0.14"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.39.4",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
-    "eslint": "^9.39.4",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
-    "globals": "^17.5.0",
-    "vite": "^8.0.9"
+<file path="src/pages/PostPage.jsx">
+// src/pages/PostPage.jsx
+
+import { useEffect, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  ArrowUp,
+  ArrowDown,
+  Bookmark,
+  Share2,
+  ArrowLeft,
+  Calendar,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  X,
+} from "lucide-react";
+import { CommentThread } from "@/features/comments";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+import { useAuthStore } from "@/store/authStore";
+import { usePostsStore } from "@/store/postsStore";
+import { cn } from "@/lib/utils";
+
+export default function PostPage() {
+  const { postId } = useParams();
+  const { user } = useAuthStore();
+  const { currentPost, loading, error, fetchPost, vote, editPost, deletePost } =
+    usePostsStore();
+  const navigate = useNavigate();
+
+  // Edit Modal State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState(null);
+
+  useEffect(() => {
+    fetchPost(postId);
+  }, [fetchPost, postId]);
+
+  const handleVote = (dir) => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    vote(postId, dir);
+  };
+
+  // Check if the current user owns the post
+  const isOwner =
+    user &&
+    currentPost &&
+    (String(user.id) === String(currentPost.author_id) ||
+      user.username === currentPost.author_username);
+
+  const handleSaveEdit = async () => {
+    if (!editTitle.trim() || !editContent.trim()) {
+      setEditError("Title and content cannot be empty.");
+      return;
+    }
+    setEditLoading(true);
+    setEditError(null);
+    const result = await editPost(
+      currentPost.id,
+      editTitle.trim(),
+      editContent.trim(),
+    );
+    setEditLoading(false);
+    if (result.success) {
+      setIsEditing(false);
+    } else {
+      setEditError(result.error || "Failed to edit post.");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this post? This cannot be undone.",
+      )
+    )
+      return;
+
+    const result = await deletePost(currentPost.id);
+    if (result.success) {
+      navigate("/"); // Redirect to home feed after deletion
+    } else {
+      alert(result.error || "Failed to delete post.");
+    }
+  };
+
+  if (loading && !currentPost) {
+    // ... existing skeleton loading code ...
+    return (
+      <div className="mx-auto max-w-5xl space-y-4">
+        <Skeleton className="h-8 w-24" />
+        <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
+          <Card className="shadow-none">
+            <div className="p-6 space-y-4">
+              <div className="flex gap-3">
+                <Skeleton className="size-10 rounded-full" />
+                <Skeleton className="h-4 w-48" />
+              </div>
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
   }
+
+  if (error) {
+    // ... existing error code ...
+    return (
+      <div className="mx-auto max-w-5xl space-y-4">
+        <Button variant="ghost" size="sm" asChild>
+          <Link to="/">
+            <ArrowLeft className="size-4" /> Back
+          </Link>
+        </Button>
+        <p className="text-sm text-destructive">{error}</p>
+      </div>
+    );
+  }
+
+  if (!currentPost) return null;
+
+  const userVote = currentPost.userVote ?? 0;
+  const community = currentPost.community || "general";
+  const score = currentPost.score ?? 0;
+  const tags = currentPost.tags ?? [];
+
+  return (
+    <div className="mx-auto w-full max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+      <Button variant="ghost" size="sm" asChild className="-mb-2">
+        <Link to="/">
+          <ArrowLeft className="size-4" /> Back to Feed
+        </Link>
+      </Button>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        {/* Main Content Column */}
+        <div className="min-w-0 space-y-6">
+          {/* Post Card */}
+          <Card className="shadow-none overflow-hidden w-full">
+            <div className="p-5 sm:p-6">
+              {/* Meta */}
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Avatar size="sm">
+                  <AvatarFallback>
+                    {community.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="font-medium text-foreground">
+                  v/{community}
+                </span>
+                <span>•</span>
+                <span>Posted by {currentPost.author}</span>
+              </div>
+
+              {/* Title */}
+              <h1 className="mt-3 text-xl sm:text-2xl font-bold leading-tight text-card-foreground break-words">
+                {currentPost.title}
+              </h1>
+
+              {/* Tags */}
+              {tags.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {tags.map((tag) => (
+                    <Badge key={tag} variant="secondary">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+              {/* Body (Markdown) */}
+              {currentPost.content && (
+                <div className="mt-4">
+                  <MarkdownRenderer content={currentPost.content} />
+                </div>
+              )}
+
+              <Separator className="my-5" />
+
+              {/* Actions */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center rounded-lg bg-muted p-0.5">
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label="Upvote"
+                    onClick={() => handleVote(1)}
+                    className={cn(userVote === 1 && "text-primary")}
+                  >
+                    <ArrowUp className="size-4" />
+                  </Button>
+                  <span
+                    className={cn(
+                      "min-w-8 px-1 text-center text-sm font-semibold tabular-nums",
+                      userVote === 1 && "text-primary",
+                      userVote === -1 && "text-destructive",
+                    )}
+                  >
+                    {score}
+                  </span>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label="Downvote"
+                    onClick={() => handleVote(-1)}
+                    className={cn(userVote === -1 && "text-destructive")}
+                  >
+                    <ArrowDown className="size-4" />
+                  </Button>
+                </div>
+
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="px-2 text-muted-foreground"
+                >
+                  <Share2 className="size-4 me-1.5" /> Share
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="px-2 text-muted-foreground"
+                >
+                  <Bookmark className="size-4 me-1.5" /> Save
+                </Button>
+
+                {/* Owner Actions Dropdown */}
+                {isOwner && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="px-2 text-muted-foreground ms-auto"
+                      >
+                        <MoreHorizontal className="size-4" />
+                        <span className="hidden sm:inline">More</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setEditTitle(currentPost.title);
+                          setEditContent(currentPost.content || "");
+                          setEditError(null);
+                          setIsEditing(true);
+                        }}
+                      >
+                        <Pencil className="size-4 me-2" /> Edit Post
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={handleDelete}
+                      >
+                        <Trash2 className="size-4 me-2" /> Delete Post
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+            </div>
+          </Card>
+
+          {/* Comments Section Card */}
+          <Card className="shadow-none">
+            <div className="p-5 sm:p-6">
+              <CommentThread postId={String(currentPost.id)} />
+            </div>
+          </Card>
+        </div>
+
+        {/* Right Sidebar (Desktop Only) */}
+        <aside className="hidden lg:block space-y-4">
+          {/* ... existing sidebar code ... */}
+          <Card className="shadow-none sticky top-20">
+            <div className="p-4 space-y-4">
+              <div className="flex items-center gap-3">
+                <Avatar className="size-10">
+                  <AvatarFallback>
+                    {community.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-bold text-foreground">v/{community}</p>
+                  <p className="text-xs text-muted-foreground">Community</p>
+                </div>
+              </div>
+              <Separator />
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <p className="text-lg font-bold text-foreground">1.2k</p>
+                  <p className="text-xs text-muted-foreground">Members</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-foreground">45</p>
+                  <p className="text-xs text-muted-foreground">Online</p>
+                </div>
+              </div>
+              <Separator />
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Calendar className="size-4" />
+                <span>Created Jan 1, 2024</span>
+              </div>
+              <Button className="w-full" variant="outline">
+                Join Community
+              </Button>
+            </div>
+          </Card>
+        </aside>
+      </div>
+
+      {/* Edit Post Modal */}
+      {isEditing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <Card className="w-full max-w-lg shadow-xl">
+            <div className="p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-semibold text-card-foreground">
+                  Edit Post
+                </h2>
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  onClick={() => setIsEditing(false)}
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                <Input
+                  placeholder="Title"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="text-sm"
+                />
+                <Textarea
+                  placeholder="What's on your mind?"
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="min-h-32 text-sm"
+                />
+              </div>
+
+              {editError && (
+                <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {editError}
+                </p>
+              )}
+
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setIsEditing(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSaveEdit}
+                  disabled={
+                    editLoading || !editTitle.trim() || !editContent.trim()
+                  }
+                >
+                  {editLoading ? "Saving…" : "Save Changes"}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
 }
+</file>
+
+<file path="src/store/postsStore.js">
+import { create } from "zustand";
+import { getResponseData, postsAPI } from "../services/api";
+import { normalisePost } from "@/lib/normalise";
+import { getErrorMessage } from "@/lib/error";
+
+export const usePostsStore = create((set, get) => ({
+  posts: [],
+  currentPost: null,
+  loading: false,
+  error: null,
+  page: 1,
+  hasMore: true,
+
+  fetchPosts: async (page = 1, sort_by = "") => {
+    set({ loading: true, error: null });
+    try {
+      const { data } = await postsAPI.getAll(page, sort_by);
+      const incoming = getResponseData(data, []).map(normalisePost);
+      set({
+        posts: page === 1 ? incoming : [...get().posts, ...incoming],
+        loading: false,
+        page,
+        hasMore: incoming.length > 0,
+      });
+    } catch (err) {
+      set({
+        loading: false,
+        error: getErrorMessage(err, "Failed to load posts"),
+      });
+    }
+  },
+  fetchSpacePosts: async (spaceId, page = 1, sort_by = "") => {
+    set({ loading: true, error: null });
+    try {
+      const { data } = await postsAPI.getBySpace(spaceId, page, sort_by);
+      const incoming = getResponseData(data, []).map(normalisePost);
+      set({
+        posts: page === 1 ? incoming : [...get().posts, ...incoming],
+        loading: false,
+        page,
+        hasMore: incoming.length > 0,
+      });
+    } catch (err) {
+      set({
+        loading: false,
+        error: getErrorMessage(err, "Failed to load space posts"),
+      });
+    }
+  },
+  fetchHome: async (page = 1, sort_by = "") => {
+    set({ loading: true, error: null });
+    try {
+      const { data } = await postsAPI.getHomePage(page, sort_by);
+      const incoming = getResponseData(data, []).map(normalisePost);
+      set({
+        posts: page === 1 ? incoming : [...get().posts, ...incoming],
+        loading: false,
+        page,
+        hasMore: incoming.length > 0,
+      });
+    } catch (err) {
+      set({
+        loading: false,
+        error: getErrorMessage(err, "Failed to load posts"),
+      });
+    }
+  },
+
+  fetchPost: async (postId) => {
+    set({ currentPost: null, loading: true, error: null });
+    try {
+      const { data } = await postsAPI.getById(postId);
+      set({
+        currentPost: normalisePost(getResponseData(data, null)),
+        loading: false,
+      });
+    } catch (err) {
+      set({
+        loading: false,
+        error: getErrorMessage(err, "Failed to load post"),
+      });
+    }
+  },
+
+  createPost: async (subId, title, content, sort_by = "") => {
+    try {
+      await postsAPI.create(subId, title, content);
+      // Refresh first page
+      await get().fetchPosts(1, sort_by);
+      return { success: true };
+    } catch (err) {
+      const msg = getErrorMessage(err, "Failed to create post");
+      return { success: false, error: msg };
+    }
+  },
+  editPost: async (postId, title, content) => {
+    set({ loading: true, error: null });
+    try {
+      await postsAPI.update(postId, title, content);
+      await get().fetchPost(postId);
+      set({ loading: false });
+      return { success: true };
+    } catch (err) {
+      const msg = getErrorMessage(err, "Failed to edit post");
+      set({ loading: false, error: msg });
+      return { success: false, error: msg };
+    }
+  },
+
+  deletePost: async (postId) => {
+    set({ loading: true, error: null });
+    try {
+      await postsAPI.delete(postId);
+      set({ currentPost: null, loading: false });
+      return { success: true };
+    } catch (err) {
+      const msg = getErrorMessage(err, "Failed to delete post");
+      set({ loading: false, error: msg });
+      return { success: false, error: msg };
+    }
+  },
+
+  vote: async (postId, direction) => {
+    const existing =
+      get().posts.find((p) => String(p.id) === String(postId)) ??
+      (String(get().currentPost?.id) === String(postId)
+        ? get().currentPost
+        : null);
+    const prev = existing?.userVote ?? 0;
+    const next = prev === direction ? 0 : direction;
+
+    // Optimistic update
+    const update = (posts, fromVote, toVote) =>
+      posts.map((p) => {
+        if (String(p.id) !== String(postId)) return p;
+        const delta = toVote - fromVote;
+        return {
+          ...p,
+          score: (p.score ?? p.votes ?? 0) + delta,
+          votes: (p.votes ?? p.score ?? 0) + delta,
+          userVote: toVote,
+          _userVote: toVote,
+        };
+      });
+
+    set((s) => ({ posts: update(s.posts, prev, next) }));
+    if (get().currentPost && String(get().currentPost.id) === String(postId)) {
+      set((s) => ({ currentPost: update([s.currentPost], prev, next)[0] }));
+    }
+
+    try {
+      if (next === 0) {
+        await postsAPI.deleteVote(postId);
+      } else if (direction === 1) {
+        await postsAPI.upvote(postId);
+      } else {
+        await postsAPI.downvote(postId);
+      }
+    } catch {
+      set((s) => ({ posts: update(s.posts, next, prev) }));
+      if (
+        get().currentPost &&
+        String(get().currentPost.id) === String(postId)
+      ) {
+        set((s) => ({ currentPost: update([s.currentPost], next, prev)[0] }));
+      }
+    }
+  },
+}));
+</file>
+
+<file path="src/store/spacesStore.js">
+import { create } from "zustand";
+import { getResponseData, spacesAPI } from "../services/api";
+import { getErrorMessage } from "@/lib/error";
+
+function slugify(input) {
+  if (!input) return "";
+  return input
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .substring(0, 50);
+}
+
+function normaliseSpace(space) {
+  return {
+    ...space,
+    id: space.ID,
+    username: space.Username,
+    title: space.Title,
+    description: space.Description,
+    subscribersCount: space.SubscribersCount,
+    views: space.Views,
+  };
+}
+
+export const useSpacesStore = create((set, get) => ({
+  spaces: [],
+  subscribedSpaces: [],
+  loading: false,
+  subscriptionsLoading: false,
+  error: null,
+  subscriptionsError: null,
+  page: 1,
+  hasMore: true,
+  subscribeLoading: false,
+
+  fetchSpaces: async (page = 1, sort_by = "") => {
+    set({ loading: true, error: null });
+    try {
+      const { data } = await spacesAPI.getAll(page, sort_by);
+      const incoming = getResponseData(data, []).map(normaliseSpace);
+      set({
+        spaces: page === 1 ? incoming : [...get().spaces, ...incoming],
+        loading: false,
+        page,
+        hasMore: incoming.length > 0,
+      });
+    } catch (err) {
+      set({
+        loading: false,
+        error: getErrorMessage(err, "Failed to load spaces"),
+      });
+    }
+  },
+
+  fetchSubscriptions: async () => {
+    set({ subscriptionsLoading: true, subscriptionsError: null });
+    try {
+      const { data } = await spacesAPI.getSubscriptions();
+      const incoming = getResponseData(data, []).map(normaliseSpace);
+      set({ subscribedSpaces: incoming, subscriptionsLoading: false });
+    } catch (err) {
+      set({
+        subscriptionsLoading: false,
+        subscriptionsError: getErrorMessage(
+          err,
+          "Failed to load subscriptions",
+        ),
+      });
+    }
+  },
+
+  subscribeToSpace: async (spaceId) => {
+    set({ subscribeLoading: true, error: null });
+    try {
+      await spacesAPI.subscribe(spaceId);
+      await get().fetchSubscriptions();
+      await get().fetchSpaces(1);
+      set({ subscribeLoading: false });
+      return { success: true };
+    } catch (err) {
+      const msg = getErrorMessage(err, "Failed to subscribe to space");
+      set({ subscribeLoading: false, error: msg });
+      return { success: false, error: msg };
+    }
+  },
+  unsubscribeFromSpace: async (spaceId) => {
+    set({ subscribeLoading: true, error: null });
+    try {
+      await spacesAPI.unsubscribe(spaceId);
+      await get().fetchSubscriptions();
+      await get().fetchSpaces(1);
+      set({ subscribeLoading: false });
+      return { success: true };
+    } catch (err) {
+      const msg = getErrorMessage(err, "Failed to unsubscribe from space");
+      set({ subscribeLoading: false, error: msg });
+      return { success: false, error: msg };
+    }
+  },
+
+  createSpace: async (title, description) => {
+    set({ createLoading: true, createError: null });
+    try {
+      const username = slugify(title);
+      await spacesAPI.create(title, description, username);
+      await get().fetchSpaces(1);
+      set({ createLoading: false });
+      return { success: true };
+    } catch (err) {
+      const msg = getErrorMessage(err, "Failed to create space");
+      set({ createLoading: false, createError: msg });
+      return { success: false, error: msg };
+    }
+  },
+}));
+
+export default useSpacesStore;
 </file>
 
 <file path="src/features/feed/components/feed-composer.jsx">
@@ -7042,7 +6941,505 @@ export function FeedComposer({ sortBy = "" }) {
 }
 </file>
 
+<file path="src/index.css">
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/inter";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+html {
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+:root {
+  --background: rgb(255, 255, 255);
+  --foreground: rgb(26, 26, 27);
+  --card: rgb(255, 255, 255);
+  --card-foreground: rgb(26, 26, 27);
+  --popover: rgb(255, 255, 255);
+  --popover-foreground: rgb(26, 26, 27);
+  --primary: rgb(255, 69, 0);
+  --primary-foreground: rgb(255, 255, 255);
+  --secondary: rgb(0, 121, 211);
+  --secondary-foreground: rgb(255, 255, 255);
+  --muted: rgb(246, 247, 248);
+  --muted-foreground: rgb(124, 124, 124);
+  --accent: rgb(237, 239, 241);
+  --accent-foreground: rgb(28, 28, 28);
+  --destructive: rgb(234, 0, 39);
+  --destructive-foreground: rgb(255, 255, 255);
+  --border: rgb(237, 239, 241);
+  --input: rgb(246, 247, 248);
+  --ring: rgb(0, 121, 211);
+  --chart-1: rgb(255, 69, 0);
+  --chart-2: rgb(0, 121, 211);
+  --chart-3: rgb(255, 176, 0);
+  --chart-4: rgb(130, 117, 255);
+  --chart-5: rgb(70, 209, 96);
+  --sidebar: rgb(255, 255, 255);
+  --sidebar-foreground: rgb(28, 28, 28);
+  --sidebar-primary: rgb(255, 69, 0);
+  --sidebar-primary-foreground: rgb(255, 255, 255);
+  --sidebar-accent: rgb(246, 247, 248);
+  --sidebar-accent-foreground: rgb(255, 69, 0);
+  --sidebar-border: rgb(237, 239, 241);
+  --sidebar-ring: rgb(0, 121, 211);
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-serif: "Noto Serif", serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --radius: 1rem;
+  --shadow-x: 0px;
+  --shadow-y: 2px;
+  --shadow-blur: 10px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0.05;
+  --shadow-color: #000000;
+  --shadow-2xs: 0px 2px 10px 0px hsl(0 0% 0% / 0.03);
+  --shadow-xs: 0px 2px 10px 0px hsl(0 0% 0% / 0.03);
+  --shadow-sm:
+    0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05);
+  --shadow:
+    0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05);
+  --shadow-md:
+    0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 2px 4px -1px hsl(0 0% 0% / 0.05);
+  --shadow-lg:
+    0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 4px 6px -1px hsl(0 0% 0% / 0.05);
+  --shadow-xl:
+    0px 2px 10px 0px hsl(0 0% 0% / 0.05), 0px 8px 10px -1px hsl(0 0% 0% / 0.05);
+  --shadow-2xl: 0px 2px 10px 0px hsl(0 0% 0% / 0.13);
+  --tracking-normal: -0.01em;
+  --spacing: 0.25rem;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: color-mix(in srgb, var(--foreground) 18%, transparent);
+  --scrollbar-thumb-hover: color-mix(
+    in srgb,
+    var(--foreground) 30%,
+    transparent
+  );
+}
+
+.dark {
+  --background: rgb(3, 3, 3);
+  --foreground: rgb(215, 218, 220);
+  --card: rgb(26, 26, 27);
+  --card-foreground: rgb(215, 218, 220);
+  --popover: rgb(26, 26, 27);
+  --popover-foreground: rgb(215, 218, 220);
+  --primary: rgb(255, 69, 0);
+  --primary-foreground: rgb(255, 255, 255);
+  --secondary: rgb(215, 218, 220);
+  --secondary-foreground: rgb(26, 26, 27);
+  --muted: rgb(39, 39, 41);
+  --muted-foreground: rgb(129, 131, 132);
+  --accent: rgb(45, 45, 46);
+  --accent-foreground: rgb(255, 255, 255);
+  --destructive: rgb(255, 88, 91);
+  --destructive-foreground: rgb(255, 255, 255);
+  --border: rgb(52, 53, 54);
+  --input: rgb(39, 39, 41);
+  --ring: rgb(215, 218, 220);
+  --chart-1: rgb(255, 69, 0);
+  --chart-2: rgb(0, 121, 211);
+  --chart-3: rgb(255, 176, 0);
+  --chart-4: rgb(130, 117, 255);
+  --chart-5: rgb(70, 209, 96);
+  --sidebar: rgb(26, 26, 27);
+  --sidebar-foreground: rgb(215, 218, 220);
+  --sidebar-primary: rgb(255, 69, 0);
+  --sidebar-primary-foreground: rgb(255, 255, 255);
+  --sidebar-accent: rgb(39, 39, 41);
+  --sidebar-accent-foreground: rgb(255, 69, 0);
+  --sidebar-border: rgb(52, 53, 54);
+  --sidebar-ring: rgb(215, 218, 220);
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-serif: "Noto Serif", serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --radius: 1rem;
+  --shadow-x: 0px;
+  --shadow-y: 4px;
+  --shadow-blur: 20px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0.5;
+  --shadow-color: #000000;
+  --shadow-2xs: 0px 4px 20px 0px hsl(0 0% 0% / 0.25);
+  --shadow-xs: 0px 4px 20px 0px hsl(0 0% 0% / 0.25);
+  --shadow-sm:
+    0px 4px 20px 0px hsl(0 0% 0% / 0.5), 0px 1px 2px -1px hsl(0 0% 0% / 0.5);
+  --shadow:
+    0px 4px 20px 0px hsl(0 0% 0% / 0.5), 0px 1px 2px -1px hsl(0 0% 0% / 0.5);
+  --shadow-md:
+    0px 4px 20px 0px hsl(0 0% 0% / 0.5), 0px 2px 4px -1px hsl(0 0% 0% / 0.5);
+  --shadow-lg:
+    0px 4px 20px 0px hsl(0 0% 0% / 0.5), 0px 4px 6px -1px hsl(0 0% 0% / 0.5);
+  --shadow-xl:
+    0px 4px 20px 0px hsl(0 0% 0% / 0.5), 0px 8px 10px -1px hsl(0 0% 0% / 0.5);
+  --shadow-2xl: 0px 4px 20px 0px hsl(0 0% 0% / 1.25);
+  --scrollbar-thumb: color-mix(in srgb, var(--foreground) 22%, transparent);
+  --scrollbar-thumb-hover: color-mix(
+    in srgb,
+    var(--foreground) 36%,
+    transparent
+  );
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-serif);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-2xs: var(--shadow-2xs);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
+
+  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
+  --tracking-normal: var(--tracking-normal);
+  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
+  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
+  --tracking-widest: calc(var(--tracking-normal) + 0.1em);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  html {
+    @apply font-sans;
+  }
+
+  * {
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-width: thin;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+</file>
+
+<file path="src/services/api.js">
+import axios from "axios";
+
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api/v1";
+const ACCESS_TOKEN_KEY = "access_token";
+const REFRESH_TOKEN_KEY = "refresh_token";
+const ACCESS_TOKEN_EXPIRES_AT_KEY = "access_token_expires_at";
+const USER_KEY = "user";
+
+export function getStoredAccessToken() {
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
+}
+
+export function storeAuthSession({
+  accessToken,
+  refreshToken,
+  expiresAt,
+  user,
+}) {
+  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+
+  if (refreshToken) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  } else {
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  }
+
+  if (expiresAt) {
+    localStorage.setItem(ACCESS_TOKEN_EXPIRES_AT_KEY, String(expiresAt));
+  } else {
+    localStorage.removeItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
+  }
+
+  if (user) {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  } else {
+    localStorage.removeItem(USER_KEY);
+  }
+}
+
+export function clearAuthSession() {
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
+  localStorage.removeItem(USER_KEY);
+}
+
+function shouldClearAuth(status, code) {
+  return status === 401 || code === "invalid_token";
+}
+
+function redirectToLogin() {
+  if (window.location.pathname !== "/login") {
+    window.location.href = "/login";
+  }
+}
+
+function getAppStatus(response) {
+  const status = response?.data?.status;
+  return typeof status === "number" ? status : 0;
+}
+
+function buildAppError(response) {
+  const payload = response?.data;
+  const errors = payload?.errors;
+  const message =
+    errors?.non_field || payload?.msg || payload?.message || "Request failed";
+  const error = new Error(message);
+  error.response = response;
+  return error;
+}
+
+const api = axios.create({
+  baseURL: BASE_URL,
+  headers: { "Content-Type": "application/json" },
+});
+
+// Attach JWT token to every request
+api.interceptors.request.use((config) => {
+  const token = getStoredAccessToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+// The backend wraps application status in the JSON body while returning HTTP 200.
+api.interceptors.response.use(
+  (res) => {
+    const appStatus = getAppStatus(res);
+    if (appStatus >= 400) {
+      if (shouldClearAuth(appStatus, res.data?.code)) {
+        clearAuthSession();
+        redirectToLogin();
+      }
+      return Promise.reject(buildAppError(res));
+    }
+    return res;
+  },
+  (err) => {
+    if (shouldClearAuth(err.response?.status, err.response?.data?.code)) {
+      clearAuthSession();
+      redirectToLogin();
+    }
+    return Promise.reject(err);
+  },
+);
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+export const authAPI = {
+  login: (username, password) =>
+    api.post("/users/login", { username, password }),
+  register: (username, password) =>
+    api.post("/users/register", { username, password }),
+};
+
+// ─── Spaces (Communities) ────────────────────────────────────────────────────
+export const spacesAPI = {
+  getAll: (page = 1, sort_by = "") =>
+    api.get("/spaces", { params: { page, sort_by } }),
+  getById: (spaceId) => api.get(`/spaces/${spaceId}`),
+  getSubscriptions: () => api.get("/spaces/subscriptions"),
+  create: (title, description, username) =>
+    api.post("/spaces", { title, description, username }),
+  update: (spaceId, title, description) =>
+    api.put(`/spaces/${spaceId}`, { title, description }),
+  delete: (spaceId) => api.delete(`/spaces/${spaceId}`),
+  subscribe: (spaceId) => api.post(`/spaces/${spaceId}/subscribe`),
+  unsubscribe: (spaceId) => api.post(`/spaces/${spaceId}/unsubscribe`),
+};
+
+// ─── Posts ───────────────────────────────────────────────────────────────────
+export const postsAPI = {
+  getAll: (page = 1, sort_by = "") =>
+    api.get("/posts", { params: { page, sort_by } }),
+  getHomePage: (page = 1, sort_by = "") =>
+    api.get("/posts/home", { params: { page, sort_by } }),
+  getById: (postId) => api.get(`/posts/${postId}`),
+  getBySpace: (spaceId, page = 1, sort_by = "") =>
+    api.get(`/spaces/${spaceId}/posts`, { params: { page, sort_by } }),
+  create: (spaceId, title, content) =>
+    api.post(`/spaces/${spaceId}/posts`, { title, content }),
+  update: (postId, title, content) =>
+    api.put(`/posts/${postId}`, { title, content }),
+  delete: (postId) => api.delete(`/posts/${postId}`),
+  upvote: (postId) => api.post(`/posts/${postId}/upvote`),
+  downvote: (postId) => api.post(`/posts/${postId}/downvote`),
+  deleteVote: (postId) => api.delete(`/posts/${postId}/votes`),
+};
+
+// ─── Comments ────────────────────────────────────────────────────────────────
+export const commentsAPI = {
+  // Backend returns flat list; parent_id=0 means top-level
+  getAll: (postId, page = 1, sortBy = "") =>
+    api.get(`/posts/${postId}/comments`, {
+      params: { page, order_by: sortBy },
+    }),
+  getById: (commentId) => api.get(`/comments/${commentId}`),
+  create: (postId, content, parent_id = 0) =>
+    api.post(`/posts/${postId}/comments`, { content, parent_id }),
+  update: (commentId, content) =>
+    api.put(`/comments/${commentId}`, { content }),
+  delete: (commentId) => api.delete(`/comments/${commentId}`),
+  upvote: (commentId) => api.post(`/comments/${commentId}/upvote`),
+  downvote: (commentId) => api.post(`/comments/${commentId}/downvote`),
+  deleteVote: (commentId) => api.delete(`/comments/${commentId}/votes`),
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Build a nested tree from a flat comment list using parent_id */
+export function getResponseData(payload, fallback = null) {
+  return payload?.data ?? fallback;
+}
+
+export {
+  buildCommentTree,
+  normalisePost,
+  normaliseComment,
+  formatRelativeDate,
+} from "@/lib/normalise";
+
+export default api;
+</file>
+
+<file path="package.json">
+{
+  "name": "voteria",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.2.8",
+    "@tailwindcss/vite": "^4.2.3",
+    "axios": "^1.17.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.17.0",
+    "next-themes": "^0.4.6",
+    "radix-ui": "^1.4.3",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.14.1",
+    "recharts": "3.8.0",
+    "rehype-highlight": "^7.0.2",
+    "rehype-katex": "^7.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "shadcn": "^4.8.3",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.2.3",
+    "tw-animate-css": "^1.4.0",
+    "vaul": "^1.1.2",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@tailwindcss/typography": "^0.5.20",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.5.0",
+    "vite": "^8.0.9"
+  }
+}
+</file>
+
 <file path="src/layouts/root/components/app-sidebar.jsx">
+// src/layouts/root/components/app-sidebar.jsx
+
 import { useEffect, useState } from "react";
 import { NavMain } from "./nav-main";
 import { NavProjects } from "./nav-projects";
@@ -7052,23 +7449,27 @@ import { useSpacesStore } from "@/store/spacesStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
 import {
-  Sheet,
-  SheetTrigger,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-} from "@/components/ui/sheet";
-import { Plus, FolderIcon } from "lucide-react";
-import { Sidebar, SidebarContent, SidebarRail } from "@/components/ui/sidebar";
+  Rocket,
+  Orbit, // Changed from Sparkles
+  X,
+} from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarRail,
+  SidebarGroup,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from "@/components/ui/sidebar";
 
 function mapSpaceToProject(space) {
   return {
     name: `v/${space.title}`,
-    url: "/",
-    icon: FolderIcon,
+    url: `/space/${space.id}`,
+    icon: Orbit,
     id: space.id,
   };
 }
@@ -7077,17 +7478,13 @@ export function AppSidebar(props) {
   const token = useAuthStore((state) => state.token);
   const {
     subscribedSpaces,
-    loading: spacesLoading,
-    subscriptionsLoading,
-    error: spacesError,
-    subscriptionsError,
     fetchSubscriptions,
     createSpace,
     createLoading,
     createError,
   } = useSpacesStore();
 
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [formError, setFormError] = useState(null);
@@ -7097,18 +7494,6 @@ export function AppSidebar(props) {
     fetchSubscriptions();
   }, [token, fetchSubscriptions]);
 
-  useEffect(() => {
-    if (spacesError || subscriptionsError) {
-      setFormError(spacesError || subscriptionsError);
-    }
-  }, [spacesError, subscriptionsError]);
-
-  useEffect(() => {
-    if (createError) {
-      setFormError(createError);
-    }
-  }, [createError]);
-
   const projects = subscribedSpaces.map(mapSpaceToProject);
 
   const handleCreateSpace = async () => {
@@ -7116,84 +7501,126 @@ export function AppSidebar(props) {
       setFormError("Title and description are required.");
       return;
     }
-
     setFormError(null);
     const result = await createSpace(title.trim(), description.trim());
-
     if (result.success) {
-      setTitle("");
-      setDescription("");
-      setSheetOpen(false);
+      resetAndClose();
     } else {
       setFormError(result.error ?? "Failed to create space.");
     }
   };
 
+  const resetAndClose = () => {
+    setModalOpen(false);
+    setTitle("");
+    setDescription("");
+    setFormError(null);
+  };
+
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarContent>
-        <div className="px-4 py-3">
-          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-            <SheetTrigger asChild>
-              <Button size="sm" className="w-full justify-center" icon={Plus}>
-                Create Space
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="max-w-sm">
-              <SheetHeader>
-                <SheetTitle>Create a new space</SheetTitle>
-                <SheetDescription>
-                  Give your space a title and a short description.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="space-y-4 px-4">
-                <div>
-                  <label className="text-sm font-medium text-foreground">
+    <>
+      <Sidebar collapsible="icon" {...props}>
+        <SidebarContent>
+          <NavMain items={sidebarData.navMain} />
+          <NavProjects projects={projects} />
+
+          <SidebarGroup className="mt-auto">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="Create Space"
+                  onClick={() => setModalOpen(true)}
+                  className="bg-secondary text-secondary-foreground hover:bg-secondary/80 font-medium flex justify-evenly"
+                >
+                  <Rocket className="size-4" />
+                  <span>Create Space</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarRail />
+      </Sidebar>
+
+      {/* Create Space Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <Card className="w-full max-w-md shadow-xl">
+            <div className="p-5 space-y-4">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {/* Updated modal header icon and background to match */}
+                  <div className="flex size-8 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
+                    <Orbit className="size-4" />
+                  </div>
+                  <h2 className="text-base font-semibold text-card-foreground">
+                    Create a new space
+                  </h2>
+                </div>
+                <Button size="icon-sm" variant="ghost" onClick={resetAndClose}>
+                  <X className="size-4" />
+                </Button>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                Give your community a name and a short description so people
+                know what it's about.
+              </p>
+
+              {/* Fields */}
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-foreground">
                     Title
                   </label>
                   <Input
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
-                    placeholder="Space title"
-                    className="mt-2"
+                    placeholder="e.g. Web Development, Gaming, etc."
+                    maxLength={50}
                   />
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-foreground">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-foreground">
                     Description
                   </label>
                   <Textarea
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
-                    placeholder="Short description"
-                    className="mt-2 min-h-24"
+                    placeholder="What is this space about?"
+                    className="min-h-24"
+                    maxLength={200}
                   />
                 </div>
-                {formError && (
-                  <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                    {formError}
-                  </p>
-                )}
               </div>
-              <SheetFooter className="px-4 pb-4 pt-2">
+
+              {(formError || createError) && (
+                <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {formError || createError}
+                </p>
+              )}
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <Button size="sm" variant="ghost" onClick={resetAndClose}>
+                  Cancel
+                </Button>
                 <Button
                   size="sm"
-                  className="w-full"
                   onClick={handleCreateSpace}
-                  disabled={createLoading}
+                  disabled={
+                    createLoading || !title.trim() || !description.trim()
+                  }
                 >
                   {createLoading ? "Creating…" : "Create space"}
                 </Button>
-              </SheetFooter>
-            </SheetContent>
-          </Sheet>
+              </div>
+            </div>
+          </Card>
         </div>
-
-        <NavMain items={sidebarData.navMain} />
-        <NavProjects projects={projects} />
-      </SidebarContent>
-      <SidebarRail />
-    </Sidebar>
+      )}
+    </>
   );
 }
 </file>
@@ -7209,7 +7636,7 @@ export default function RootLayout() {
     <SidebarProvider
       className="h-svh flex-col overflow-hidden"
       style={{
-        "--sidebar-width": "calc(var(--spacing) * 72)",
+        "--sidebar-width": "calc(var(--spacing) * 48)",
         "--header-height": "calc(var(--spacing) * 12)",
       }}
     >
@@ -7267,7 +7694,7 @@ export default function HomePage() {
       <section className="min-h-0 min-w-0 overflow-y-auto pe-1">
         <div className="space-y-3 pb-6">
           <CommunityStrip />
-          <FeedComposer sortBy={sortBy} />
+          {/* <FeedComposer sortBy={sortBy} /> */}
           <FeedFilters
             activeFilter={activeFilter}
             onFilterChange={setActiveFilter}
