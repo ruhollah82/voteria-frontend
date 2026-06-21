@@ -113,7 +113,7 @@ export default function SubmitPage() {
     if (!content.trim()) {
       setError("Cannot submit an empty Post!");
     }
-    if (content.length > 1000) {
+    if (content.length > 10000) {
       setError("Post content cannot exceed 1,000 characters.");
       return;
     }
@@ -330,16 +330,16 @@ export default function SubmitPage() {
                             } else if (e.key === "Enter") {
                               e.preventDefault();
                               // Prevent shortcut submission if over limit
-                              if (content.length <= 1000) handleSubmit();
+                              if (content.length <= 10000) handleSubmit();
                             }
                           }
                         }}
                       />
                       {/* Character counter */}
                       <div
-                        className={`absolute bottom-3 end-4 text-xs tabular-nums pointer-events-none ${content.length > 1000 ? "text-destructive font-medium" : "text-muted-foreground"}`}
+                        className={`absolute bottom-3 end-4 text-xs tabular-nums pointer-events-none ${content.length > 10000 ? "text-destructive font-medium" : "text-muted-foreground"}`}
                       >
-                        {content.length.toLocaleString()} / 1,000
+                        {content.length.toLocaleString()} / 10,000
                       </div>
                     </div>
                   )}
@@ -386,7 +386,7 @@ export default function SubmitPage() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={loading || !title.trim() || content.length > 1000}
+              disabled={loading || !title.trim() || content.length > 10000}
               className="gap-2"
             >
               {loading ? (
