@@ -1,6 +1,85 @@
+// src/components/ui/markdown-renderer.jsx
+
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Check, Copy } from "lucide-react";
+import "highlight.js/styles/github-dark.css";
+import "katex/dist/katex.min.css";
+
+// Recursively extract plain text from React children
+function extractText(node) {
+  if (node == null) return "";
+  if (typeof node === "string") return node;
+  if (typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(extractText).join("");
+  if (node.props?.children) return extractText(node.props.children);
+  return "";
+}
+
+function CodeBlock({ node, inline, className, children, ...props }) {
+  const [copied, setCopied] = useState(false);
+  const match = /language-(\w+)/.exec(className || "");
+  const code = extractText(children).replace(/\n$/, "");
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy code:", err);
+    }
+  };
+
+  // ✅ Fix 1: Reduced padding for inline code
+  if (inline) {
+    return (
+      <code
+        className="font-mono text-[0.85em] rounded bg-muted px-1 py-0.5 break-words"
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  }
+
+  return (
+    <div className="relative group/code my-3">
+      {match && (
+        <div className="absolute top-0 start-0 px-3 py-1 text-xs font-mono text-muted-foreground bg-muted/50 rounded-se-lg border-b border-e border-border">
+          {match[1]}
+        </div>
+      )}
+      <button
+        onClick={handleCopy}
+        className="absolute top-2 end-2 p-1.5 rounded-md bg-muted/80 hover:bg-muted text-muted-foreground hover:text-foreground opacity-0 group-hover/code:opacity-100 transition-opacity"
+        aria-label="Copy code"
+      >
+        {copied ? (
+          <Check className="size-3.5" />
+        ) : (
+          <Copy className="size-3.5" />
+        )}
+      </button>
+      <pre
+        className={cn(
+          "rounded-lg bg-[#0d1117] p-4 pt-10 overflow-x-auto font-mono text-sm leading-relaxed",
+          className,
+        )}
+        {...props}
+      >
+        <code className={className} {...props}>
+          {children}
+        </code>
+      </pre>
+    </div>
+  );
+}
 
 export function MarkdownRenderer({ content, className }) {
   if (!content) return null;
@@ -8,74 +87,32 @@ export function MarkdownRenderer({ content, className }) {
   return (
     <div
       className={cn(
-        "text-sm leading-relaxed text-foreground space-y-2",
+        "prose prose-sm max-w-none dark:prose-invert break-words",
+        "prose-headings:font-bold prose-headings:tracking-tight",
+        "prose-h1:text-2xl prose-h1:mt-6 prose-h1:mb-3",
+        "prose-h2:text-xl prose-h2:mt-5 prose-h2:mb-2",
+        "prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2",
+        "prose-p:leading-relaxed prose-p:my-2 prose-p:break-words",
+        "prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-a:break-all",
+        "prose-strong:font-semibold",
+        "prose-blockquote:border-s-4 prose-blockquote:border-primary/50 prose-blockquote:ps-4 prose-blockquote:italic prose-blockquote:text-muted-foreground",
+        "prose-ul:my-2 prose-ul:space-y-1",
+        "prose-ol:my-2 prose-ol:space-y-1",
+        "prose-li:leading-relaxed prose-li:break-words",
+        "prose-table:border-collapse prose-table:w-full",
+        "prose-th:border prose-th:border-border prose-th:bg-muted/50 prose-th:px-3 prose-th:py-2 prose-th:text-start prose-th:font-semibold",
+        "prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:break-words",
+        "prose-hr:my-6 prose-hr:border-border",
+        "prose-img:rounded-lg prose-img:max-w-full prose-img:my-4",
         className,
       )}
     >
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeHighlight, rehypeKatex]}
         components={{
-          h1: (props) => (
-            <h1
-              className="text-2xl font-bold mt-4 mb-2 break-words"
-              {...props}
-            />
-          ),
-          h2: (props) => (
-            <h2
-              className="text-xl font-bold mt-3 mb-2 break-words"
-              {...props}
-            />
-          ),
-          h3: (props) => (
-            <h3
-              className="text-lg font-semibold mt-2 mb-1 break-words"
-              {...props}
-            />
-          ),
-          p: (props) => (
-            <p className="my-1 leading-relaxed break-words" {...props} />
-          ),
-          a: (props) => (
-            <a
-              className="text-primary hover:underline break-all"
-              target="_blank"
-              rel="noopener noreferrer"
-              {...props}
-            />
-          ),
-
-          ul: (props) => (
-            <ul className="list-disc ps-5 my-2 space-y-1" {...props} />
-          ),
-          ol: (props) => (
-            <ol className="list-decimal ps-5 my-2 space-y-1" {...props} />
-          ),
-          li: (props) => <li className="leading-relaxed" {...props} />,
-          blockquote: (props) => (
-            <blockquote
-              className="border-s-4 border-primary/50 ps-3 italic text-muted-foreground my-2"
-              {...props}
-            />
-          ),
-          // Inline code
-          code: (props) => (
-            <code
-              className="font-mono text-xs rounded bg-muted px-1 py-0.5"
-              {...props}
-            />
-          ),
-          // Block code (strips the inline background/padding from the inner code tag)
-          pre: (props) => (
-            <pre
-              className="rounded-lg bg-muted p-3 overflow-x-auto my-2 font-mono text-xs [&>code]:bg-transparent [&>code]:p-0"
-              {...props}
-            />
-          ),
-          hr: (props) => <hr className="my-4 border-border" {...props} />,
-          img: (props) => (
-            <img className="rounded-lg max-w-full my-2" {...props} />
-          ),
+          code: CodeBlock,
+          pre: ({ children }) => <>{children}</>,
         }}
       >
         {content}

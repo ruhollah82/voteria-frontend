@@ -143,13 +143,6 @@ export default function SubmitPage() {
     }
   };
 
-  // --- Safe Markdown Preview Renderer ---
-  const renderPreview = (text) => {
-    if (!text)
-      return "<p class='text-muted-foreground italic'>Nothing to preview</p>";
-    return <MarkdownRenderer content={text} />;
-  };
-
   return (
     <div className="mx-auto w-full max-w-4xl py-6 space-y-6">
       {/* Page Header */}
@@ -308,12 +301,16 @@ export default function SubmitPage() {
 
                   {/* Textarea / Preview */}
                   {isPreview ? (
-                    <div
-                      className="min-h-[300px] w-full rounded-md border border-input bg-background p-4 text-sm leading-relaxed max-w-none"
-                      dangerouslySetInnerHTML={{
-                        __html: renderPreview(content),
-                      }}
-                    />
+                    <div className="min-h-[300px] w-full rounded-md border border-input bg-background p-4 text-sm leading-relaxed max-w-none">
+                      {/* Render MarkdownRenderer directly as a React component */}
+                      {content ? (
+                        <MarkdownRenderer content={content} />
+                      ) : (
+                        <p className="text-muted-foreground italic">
+                          Nothing to preview
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     <div className="relative">
                       <Textarea
