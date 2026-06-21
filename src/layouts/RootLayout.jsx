@@ -8,7 +8,7 @@ export default function RootLayout() {
     <SidebarProvider
       className="h-svh flex-col overflow-hidden"
       style={{
-        "--sidebar-width": "calc(var(--spacing) * 72)",
+        "--sidebar-width": "calc(var(--spacing) * 48)",
         "--header-height": "calc(var(--spacing) * 12)",
       }}
     >

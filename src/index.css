@@ -54,7 +54,7 @@ body {
   --font-sans: "IBM Plex Sans", system-ui, sans-serif;
   --font-serif: "Noto Serif", serif;
   --font-mono: "IBM Plex Mono", monospace;
-  --radius: 1.25rem;
+  --radius: 1rem;
   --shadow-x: 0px;
   --shadow-y: 2px;
   --shadow-blur: 10px;
@@ -121,7 +121,7 @@ body {
   --font-sans: "IBM Plex Sans", system-ui, sans-serif;
   --font-serif: "Noto Serif", serif;
   --font-mono: "IBM Plex Mono", monospace;
-  --radius: 1.25rem;
+  --radius: 1rem;
   --shadow-x: 0px;
   --shadow-y: 4px;
   --shadow-blur: 20px;

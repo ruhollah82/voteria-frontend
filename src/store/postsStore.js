@@ -29,6 +29,24 @@ export const usePostsStore = create((set, get) => ({
       });
     }
   },
+  fetchSpacePosts: async (spaceId, page = 1, sort_by = "") => {
+    set({ loading: true, error: null });
+    try {
+      const { data } = await postsAPI.getBySpace(spaceId, page, sort_by);
+      const incoming = getResponseData(data, []).map(normalisePost);
+      set({
+        posts: page === 1 ? incoming : [...get().posts, ...incoming],
+        loading: false,
+        page,
+        hasMore: incoming.length > 0,
+      });
+    } catch (err) {
+      set({
+        loading: false,
+        error: getErrorMessage(err, "Failed to load space posts"),
+      });
+    }
+  },
   fetchHome: async (page = 1, sort_by = "") => {
     set({ loading: true, error: null });
     try {

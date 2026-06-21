@@ -13,7 +13,7 @@ export function FeedFilters({ activeFilter, onFilterChange }) {
     <div className="rounded-lg border border-border bg-card shadow-none">
       <div className="flex items-center gap-2 overflow-x-auto p-1.5">
         <span className="hidden shrink-0 px-2 text-xs font-medium text-muted-foreground sm:inline">
-          Sort
+          <ListFilter className="size-4" />
         </span>
         {filters.map((filter) => {
           const Icon = filter.icon;
@@ -37,11 +37,6 @@ export function FeedFilters({ activeFilter, onFilterChange }) {
             </Button>
           );
         })}
-        <div className="ms-auto shrink-0">
-          <Button size="icon-sm" variant="ghost" aria-label="Open feed filters">
-            <ListFilter className="size-4" />
-          </Button>
-        </div>
       </div>
     </div>
   );

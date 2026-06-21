@@ -6,6 +6,7 @@ import NotFoundPage from "../pages/NotFoundPage";
 import PostPage from "../pages/PostPage";
 import AuthPage from "../pages/AuthPage";
 import SubmitPage from "../pages/SubmitPage";
+import SpacePage from "../pages/SpacePage";
 
 export const router = createBrowserRouter([
   {
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
       {
         path: "submit",
         element: <SubmitPage />,
+      },
+      {
+        path: "space/:spaceId",
+        element: <SpacePage />,
       },
     ],
   },

@@ -23,10 +23,13 @@ import {
   ArrowRightIcon,
   Trash2Icon,
 } from "lucide-react";
+import { useSpacesStore } from "@/store/spacesStore";
 
 export function NavProjects({ projects = [] }) {
   const { isMobile } = useSidebar();
   const { pathname } = useLocation();
+
+  const unsubscribeFromSpace = useSpacesStore((s) => s.unsubscribeFromSpace);
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -57,18 +60,23 @@ export function NavProjects({ projects = [] }) {
                   side={isMobile ? "bottom" : "right"}
                   align={isMobile ? "end" : "start"}
                 >
-                  <DropdownMenuItem>
-                    <FolderIcon />
-                    <span>Open</span>
+                  <DropdownMenuItem asChild>
+                    <Link to={item.url}>
+                      <FolderIcon />
+                      <span>Open</span>
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <ArrowRightIcon />
                     <span>Share</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem variant="destructive">
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => unsubscribeFromSpace(item.id)}
+                  >
                     <Trash2Icon />
-                    <span>Remove</span>
+                    <span>Unsubscribe</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

@@ -133,8 +133,10 @@ export const postsAPI = {
   getHomePage: (page = 1, sort_by = "") =>
     api.get("/posts/home", { params: { page, sort_by } }),
   getById: (postId) => api.get(`/posts/${postId}`),
-  create: (subId, title, content) =>
-    api.post(`/spaces/${subId}/posts`, { title, content }),
+  getBySpace: (spaceId, page = 1, sort_by = "") =>
+    api.get(`/spaces/${spaceId}/posts`, { params: { page, sort_by } }),
+  create: (spaceId, title, content) =>
+    api.post(`/spaces/${spaceId}/posts`, { title, content }),
   update: (postId, title, content) =>
     api.put(`/posts/${postId}`, { title, content }),
   delete: (postId) => api.delete(`/posts/${postId}`),

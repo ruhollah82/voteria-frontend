@@ -65,9 +65,9 @@ export function FeedRightRail() {
             discussions that are active right now.
           </p>
         </CardHeader>
-        <CardContent className="p-4 pt-0">
+        {/* <CardContent className="p-4 pt-0">
           <Button className="w-full">Create post</Button>
-        </CardContent>
+        </CardContent> */}
       </Card>
 
       <Card className="shadow-none">

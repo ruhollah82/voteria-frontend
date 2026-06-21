@@ -86,6 +86,20 @@ export const useSpacesStore = create((set, get) => ({
       return { success: false, error: msg };
     }
   },
+  unsubscribeFromSpace: async (spaceId) => {
+    set({ subscribeLoading: true, error: null });
+    try {
+      await spacesAPI.unsubscribe(spaceId);
+      await get().fetchSubscriptions();
+      await get().fetchSpaces(1);
+      set({ subscribeLoading: false });
+      return { success: true };
+    } catch (err) {
+      const msg = getErrorMessage(err, "Failed to unsubscribe from space");
+      set({ subscribeLoading: false, error: msg });
+      return { success: false, error: msg };
+    }
+  },
 
   createSpace: async (title, description) => {
     set({ createLoading: true, createError: null });

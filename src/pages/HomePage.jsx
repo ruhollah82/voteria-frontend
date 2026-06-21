@@ -35,7 +35,7 @@ export default function HomePage() {
       <section className="min-h-0 min-w-0 overflow-y-auto pe-1">
         <div className="space-y-3 pb-6">
           <CommunityStrip />
-          <FeedComposer sortBy={sortBy} />
+          {/* <FeedComposer sortBy={sortBy} /> */}
           <FeedFilters
             activeFilter={activeFilter}
             onFilterChange={setActiveFilter}

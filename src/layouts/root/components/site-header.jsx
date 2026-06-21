@@ -56,9 +56,11 @@ export function SiteHeader() {
             className="mx-2 data-[orientation=vertical]:h-4 md:hidden"
           />
           <Link to="/" className="flex min-w-0 items-center gap-2">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-              V
-            </span>
+            <img
+              src="/Voteria.png"
+              alt="Voteria"
+              className="size-8 shrink-0 rounded-lg object-cover"
+            />
             <span className="hidden min-w-0 sm:block">
               <span className="block truncate text-sm font-semibold leading-4">
                 Voteria
