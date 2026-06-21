@@ -93,6 +93,32 @@ export const usePostsStore = create((set, get) => ({
       return { success: false, error: msg };
     }
   },
+  editPost: async (postId, title, content) => {
+    set({ loading: true, error: null });
+    try {
+      await postsAPI.update(postId, title, content);
+      await get().fetchPost(postId);
+      set({ loading: false });
+      return { success: true };
+    } catch (err) {
+      const msg = getErrorMessage(err, "Failed to edit post");
+      set({ loading: false, error: msg });
+      return { success: false, error: msg };
+    }
+  },
+
+  deletePost: async (postId) => {
+    set({ loading: true, error: null });
+    try {
+      await postsAPI.delete(postId);
+      set({ currentPost: null, loading: false });
+      return { success: true };
+    } catch (err) {
+      const msg = getErrorMessage(err, "Failed to delete post");
+      set({ loading: false, error: msg });
+      return { success: false, error: msg };
+    }
+  },
 
   vote: async (postId, direction) => {
     const existing =

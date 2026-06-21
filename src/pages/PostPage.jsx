@@ -1,4 +1,6 @@
-import { useEffect } from "react";
+// src/pages/PostPage.jsx
+
+import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   ArrowUp,
   ArrowDown,
@@ -13,6 +23,10 @@ import {
   Share2,
   ArrowLeft,
   Calendar,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  X,
 } from "lucide-react";
 import { CommentThread } from "@/features/comments";
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
@@ -22,23 +36,75 @@ import { cn } from "@/lib/utils";
 
 export default function PostPage() {
   const { postId } = useParams();
-  const { currentPost, loading, error, fetchPost, vote } = usePostsStore();
-  const token = useAuthStore((s) => s.token);
+  const { user } = useAuthStore();
+  const { currentPost, loading, error, fetchPost, vote, editPost, deletePost } =
+    usePostsStore();
   const navigate = useNavigate();
+
+  // Edit Modal State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState(null);
 
   useEffect(() => {
     fetchPost(postId);
   }, [fetchPost, postId]);
 
   const handleVote = (dir) => {
-    if (!token) {
+    if (!user) {
       navigate("/login");
       return;
     }
     vote(postId, dir);
   };
 
+  // Check if the current user owns the post
+  const isOwner =
+    user &&
+    currentPost &&
+    (String(user.id) === String(currentPost.author_id) ||
+      user.username === currentPost.author_username);
+
+  const handleSaveEdit = async () => {
+    if (!editTitle.trim() || !editContent.trim()) {
+      setEditError("Title and content cannot be empty.");
+      return;
+    }
+    setEditLoading(true);
+    setEditError(null);
+    const result = await editPost(
+      currentPost.id,
+      editTitle.trim(),
+      editContent.trim(),
+    );
+    setEditLoading(false);
+    if (result.success) {
+      setIsEditing(false);
+    } else {
+      setEditError(result.error || "Failed to edit post.");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this post? This cannot be undone.",
+      )
+    )
+      return;
+
+    const result = await deletePost(currentPost.id);
+    if (result.success) {
+      navigate("/"); // Redirect to home feed after deletion
+    } else {
+      alert(result.error || "Failed to delete post.");
+    }
+  };
+
   if (loading && !currentPost) {
+    // ... existing skeleton loading code ...
     return (
       <div className="mx-auto max-w-5xl space-y-4">
         <Skeleton className="h-8 w-24" />
@@ -60,6 +126,7 @@ export default function PostPage() {
   }
 
   if (error) {
+    // ... existing error code ...
     return (
       <div className="mx-auto max-w-5xl space-y-4">
         <Button variant="ghost" size="sm" asChild>
@@ -76,10 +143,8 @@ export default function PostPage() {
 
   const userVote = currentPost.userVote ?? 0;
   const community = currentPost.community || "general";
-  const author = currentPost.author ?? "u/unknown";
   const score = currentPost.score ?? 0;
   const tags = currentPost.tags ?? [];
-  const createdAt = currentPost.createdAt;
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
@@ -89,7 +154,6 @@ export default function PostPage() {
         </Link>
       </Button>
 
-      {/* Fixed sidebar width (320px), fluid main column */}
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* Main Content Column */}
         <div className="min-w-0 space-y-6">
@@ -97,11 +161,24 @@ export default function PostPage() {
           <Card className="shadow-none overflow-hidden w-full">
             <div className="p-5 sm:p-6">
               {/* Meta */}
-              ...
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Avatar size="sm">
+                  <AvatarFallback>
+                    {community.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="font-medium text-foreground">
+                  v/{community}
+                </span>
+                <span>•</span>
+                <span>Posted by {currentPost.author}</span>
+              </div>
+
               {/* Title */}
               <h1 className="mt-3 text-xl sm:text-2xl font-bold leading-tight text-card-foreground break-words">
                 {currentPost.title}
               </h1>
+
               {/* Tags */}
               {tags.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1.5">
@@ -112,13 +189,16 @@ export default function PostPage() {
                   ))}
                 </div>
               )}
+
               {/* Body (Markdown) */}
               {currentPost.content && (
                 <div className="mt-4">
                   <MarkdownRenderer content={currentPost.content} />
                 </div>
               )}
+
               <Separator className="my-5" />
+
               {/* Actions */}
               <div className="flex items-center gap-2">
                 <div className="flex items-center rounded-lg bg-muted p-0.5">
@@ -150,6 +230,7 @@ export default function PostPage() {
                     <ArrowDown className="size-4" />
                   </Button>
                 </div>
+
                 <Button
                   size="sm"
                   variant="ghost"
@@ -164,6 +245,40 @@ export default function PostPage() {
                 >
                   <Bookmark className="size-4 me-1.5" /> Save
                 </Button>
+
+                {/* Owner Actions Dropdown */}
+                {isOwner && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="px-2 text-muted-foreground ms-auto"
+                      >
+                        <MoreHorizontal className="size-4" />
+                        <span className="hidden sm:inline">More</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setEditTitle(currentPost.title);
+                          setEditContent(currentPost.content || "");
+                          setEditError(null);
+                          setIsEditing(true);
+                        }}
+                      >
+                        <Pencil className="size-4 me-2" /> Edit Post
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={handleDelete}
+                      >
+                        <Trash2 className="size-4 me-2" /> Delete Post
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
             </div>
           </Card>
@@ -178,6 +293,7 @@ export default function PostPage() {
 
         {/* Right Sidebar (Desktop Only) */}
         <aside className="hidden lg:block space-y-4">
+          {/* ... existing sidebar code ... */}
           <Card className="shadow-none sticky top-20">
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-3">
@@ -214,6 +330,68 @@ export default function PostPage() {
           </Card>
         </aside>
       </div>
+
+      {/* Edit Post Modal */}
+      {isEditing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <Card className="w-full max-w-lg shadow-xl">
+            <div className="p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-semibold text-card-foreground">
+                  Edit Post
+                </h2>
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  onClick={() => setIsEditing(false)}
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                <Input
+                  placeholder="Title"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="text-sm"
+                />
+                <Textarea
+                  placeholder="What's on your mind?"
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="min-h-32 text-sm"
+                />
+              </div>
+
+              {editError && (
+                <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {editError}
+                </p>
+              )}
+
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setIsEditing(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSaveEdit}
+                  disabled={
+                    editLoading || !editTitle.trim() || !editContent.trim()
+                  }
+                >
+                  {editLoading ? "Saving…" : "Save Changes"}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
