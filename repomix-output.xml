@@ -40,6 +40,12 @@ The content is organized as follows:
 </file_summary>
 
 <directory_structure>
+.codesight/CODESIGHT.md
+.codesight/components.md
+.codesight/config.md
+.codesight/graph.md
+.codesight/libs.md
+.codesight/middleware.md
 .gitignore
 components.json
 eslint.config.js
@@ -62,6 +68,7 @@ src/components/ui/drawer.jsx
 src/components/ui/dropdown-menu.jsx
 src/components/ui/input.jsx
 src/components/ui/label.jsx
+src/components/ui/markdown-renderer.jsx
 src/components/ui/select.jsx
 src/components/ui/separator.jsx
 src/components/ui/sheet.jsx
@@ -103,6 +110,7 @@ src/pages/AuthPage.jsx
 src/pages/HomePage.jsx
 src/pages/NotFoundPage.jsx
 src/pages/PostPage.jsx
+src/pages/SubmitPage.jsx
 src/services/api.js
 src/store/authStore.js
 src/store/commentStore.js
@@ -113,6 +121,242 @@ vite.config.js
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path=".codesight/CODESIGHT.md">
+# voteria — AI Context Map
+
+> **Stack:** raw-http | none | react | javascript
+
+> 0 routes | 0 models | 20 components | 6 lib files | 1 env vars | 1 middleware
+> **Token savings:** this file is ~1,500 tokens. Without it, AI exploration would cost ~17,600 tokens. **Saves ~16,000 tokens per conversation.**
+> **Last scanned:** 2026-06-21 08:35 — re-run after significant changes
+
+---
+
+# Components
+
+- **ThemeProvider** — `src\app\providers\ThemeProvider.jsx`
+- **CommentItem** — props: comment, postId, depth — `src\features\comments\components\CommentItem.jsx`
+- **CommentThread** — props: postId — `src\features\comments\components\CommentThread.jsx`
+- **CommentVoter** — props: postId, commentId, votes, userVote — `src\features\comments\components\CommentVoter.jsx`
+- **ReplyComposer** — props: postId, parentId, onClose — `src\features\comments\components\ReplyComposer.jsx`
+- **CommunityStrip** — `src\features\feed\components\community-strip.jsx`
+- **FeedComposer** — props: sortBy — `src\features\feed\components\feed-composer.jsx`
+- **FeedFilters** — props: activeFilter, onFilterChange — `src\features\feed\components\feed-filters.jsx`
+- **FeedPostCard** — props: post — `src\features\feed\components\feed-post-card.jsx`
+- **FeedRightRail** — `src\features\feed\components\feed-right-rail.jsx`
+- **AppSidebar** — `src\layouts\root\components\app-sidebar.jsx`
+- **NavMain** — props: items — `src\layouts\root\components\nav-main.jsx`
+- **NavProjects** [client] — props: projects — `src\layouts\root\components\nav-projects.jsx`
+- **SiteHeader** — `src\layouts\root\components\site-header.jsx`
+- **RootLayout** — `src\layouts\RootLayout.jsx`
+- **AboutPage** — `src\pages\AboutPage.jsx`
+- **AuthPage** — `src\pages\AuthPage.jsx`
+- **HomePage** — `src\pages\HomePage.jsx`
+- **NotFoundPage** — `src\pages\NotFoundPage.jsx`
+- **PostPage** — `src\pages\PostPage.jsx`
+
+---
+
+# Libraries
+
+- `src\features\feed\hooks\useFeedComposer.js` — function useFeedComposer: (sortBy) => void
+- `src\hooks\use-mobile.js` — function useIsMobile: () => void
+- `src\lib\error.js` — function getErrorMessage: (err, fallback) => void
+- `src\lib\normalise.js`
+  - function formatRelativeDate: (value) => void
+  - function normalisePost: (post) => void
+  - function normaliseComment: (comment) => void
+  - function buildCommentTree: (flatComments) => void
+- `src\lib\utils.js` — function cn: (...inputs) => void
+- `src\services\api.js`
+  - function getStoredAccessToken: () => void
+  - function storeAuthSession: ({...}, refreshToken, expiresAt, user, }) => void
+  - function clearAuthSession: () => void
+  - function getResponseData: (payload, fallback) => void
+  - const authAPI
+  - const spacesAPI
+  - _...2 more_
+
+---
+
+# Config
+
+## Environment Variables
+
+- `VITE_API_URL` **required** — src\services\api.js
+
+## Config Files
+
+- `vite.config.js`
+
+## Key Dependencies
+
+- react: ^19.2.5
+- tailwindcss: ^4.2.3
+
+---
+
+# Middleware
+
+## auth
+- authStore — `src\store\authStore.js`
+
+---
+
+# Dependency Graph
+
+## Most Imported Files (change these carefully)
+
+- `src\lib\utils.js` — imported by **13** files
+- `src\components\ui\button.jsx` — imported by **3** files
+- `src\services\api.js` — imported by **3** files
+- `src\components\ui\tooltip.jsx` — imported by **2** files
+- `src\features\comments\components\ReplyComposer.jsx` — imported by **2** files
+- `src\layouts\RootLayout.jsx` — imported by **1** files
+- `src\pages\HomePage.jsx` — imported by **1** files
+- `src\pages\AboutPage.jsx` — imported by **1** files
+- `src\pages\NotFoundPage.jsx` — imported by **1** files
+- `src\pages\PostPage.jsx` — imported by **1** files
+- `src\pages\AuthPage.jsx` — imported by **1** files
+- `src\hooks\use-mobile.js` — imported by **1** files
+- `src\components\ui\input.jsx` — imported by **1** files
+- `src\components\ui\separator.jsx` — imported by **1** files
+- `src\components\ui\skeleton.jsx` — imported by **1** files
+- `src\features\comments\components\CommentVoter.jsx` — imported by **1** files
+- `src\features\comments\components\CommentItem.jsx` — imported by **1** files
+- `src\features\comments\components\CommentThread.jsx` — imported by **1** files
+- `src\features\feed\hooks\useFeedComposer.js` — imported by **1** files
+- `src\features\feed\components\community-strip.jsx` — imported by **1** files
+
+## Import Map (who imports what)
+
+- `src\lib\utils.js` ← `src\components\ui\avatar.jsx`, `src\components\ui\badge.jsx`, `src\components\ui\breadcrumb.jsx`, `src\components\ui\button.jsx`, `src\components\ui\card.jsx` +8 more
+- `src\components\ui\button.jsx` ← `src\components\ui\sheet.jsx`, `src\components\ui\sidebar.jsx`, `src\pages\AboutPage.jsx`
+- `src\services\api.js` ← `src\store\commentStore.js`, `src\store\postsStore.js`, `src\store\spacesStore.js`
+- `src\components\ui\tooltip.jsx` ← `src\components\ui\sidebar.jsx`, `src\main.jsx`
+- `src\features\comments\components\ReplyComposer.jsx` ← `src\features\comments\components\CommentItem.jsx`, `src\features\comments\components\CommentThread.jsx`
+- `src\layouts\RootLayout.jsx` ← `src\app\router.jsx`
+- `src\pages\HomePage.jsx` ← `src\app\router.jsx`
+- `src\pages\AboutPage.jsx` ← `src\app\router.jsx`
+- `src\pages\NotFoundPage.jsx` ← `src\app\router.jsx`
+- `src\pages\PostPage.jsx` ← `src\app\router.jsx`
+
+---
+
+_Generated by [codesight](https://github.com/Houseofmvps/codesight) — see your codebase clearly_
+</file>
+
+<file path=".codesight/components.md">
+# Components
+
+- **ThemeProvider** — `src\app\providers\ThemeProvider.jsx`
+- **CommentItem** — props: comment, postId, depth — `src\features\comments\components\CommentItem.jsx`
+- **CommentThread** — props: postId — `src\features\comments\components\CommentThread.jsx`
+- **CommentVoter** — props: postId, commentId, votes, userVote — `src\features\comments\components\CommentVoter.jsx`
+- **ReplyComposer** — props: postId, parentId, onClose — `src\features\comments\components\ReplyComposer.jsx`
+- **CommunityStrip** — `src\features\feed\components\community-strip.jsx`
+- **FeedComposer** — props: sortBy — `src\features\feed\components\feed-composer.jsx`
+- **FeedFilters** — props: activeFilter, onFilterChange — `src\features\feed\components\feed-filters.jsx`
+- **FeedPostCard** — props: post — `src\features\feed\components\feed-post-card.jsx`
+- **FeedRightRail** — `src\features\feed\components\feed-right-rail.jsx`
+- **AppSidebar** — `src\layouts\root\components\app-sidebar.jsx`
+- **NavMain** — props: items — `src\layouts\root\components\nav-main.jsx`
+- **NavProjects** [client] — props: projects — `src\layouts\root\components\nav-projects.jsx`
+- **SiteHeader** — `src\layouts\root\components\site-header.jsx`
+- **RootLayout** — `src\layouts\RootLayout.jsx`
+- **AboutPage** — `src\pages\AboutPage.jsx`
+- **AuthPage** — `src\pages\AuthPage.jsx`
+- **HomePage** — `src\pages\HomePage.jsx`
+- **NotFoundPage** — `src\pages\NotFoundPage.jsx`
+- **PostPage** — `src\pages\PostPage.jsx`
+</file>
+
+<file path=".codesight/config.md">
+# Config
+
+## Environment Variables
+
+- `VITE_API_URL` **required** — src\services\api.js
+
+## Config Files
+
+- `vite.config.js`
+
+## Key Dependencies
+
+- react: ^19.2.5
+- tailwindcss: ^4.2.3
+</file>
+
+<file path=".codesight/graph.md">
+# Dependency Graph
+
+## Most Imported Files (change these carefully)
+
+- `src\lib\utils.js` — imported by **13** files
+- `src\components\ui\button.jsx` — imported by **3** files
+- `src\services\api.js` — imported by **3** files
+- `src\components\ui\tooltip.jsx` — imported by **2** files
+- `src\features\comments\components\ReplyComposer.jsx` — imported by **2** files
+- `src\layouts\RootLayout.jsx` — imported by **1** files
+- `src\pages\HomePage.jsx` — imported by **1** files
+- `src\pages\AboutPage.jsx` — imported by **1** files
+- `src\pages\NotFoundPage.jsx` — imported by **1** files
+- `src\pages\PostPage.jsx` — imported by **1** files
+- `src\pages\AuthPage.jsx` — imported by **1** files
+- `src\hooks\use-mobile.js` — imported by **1** files
+- `src\components\ui\input.jsx` — imported by **1** files
+- `src\components\ui\separator.jsx` — imported by **1** files
+- `src\components\ui\skeleton.jsx` — imported by **1** files
+- `src\features\comments\components\CommentVoter.jsx` — imported by **1** files
+- `src\features\comments\components\CommentItem.jsx` — imported by **1** files
+- `src\features\comments\components\CommentThread.jsx` — imported by **1** files
+- `src\features\feed\hooks\useFeedComposer.js` — imported by **1** files
+- `src\features\feed\components\community-strip.jsx` — imported by **1** files
+
+## Import Map (who imports what)
+
+- `src\lib\utils.js` ← `src\components\ui\avatar.jsx`, `src\components\ui\badge.jsx`, `src\components\ui\breadcrumb.jsx`, `src\components\ui\button.jsx`, `src\components\ui\card.jsx` +8 more
+- `src\components\ui\button.jsx` ← `src\components\ui\sheet.jsx`, `src\components\ui\sidebar.jsx`, `src\pages\AboutPage.jsx`
+- `src\services\api.js` ← `src\store\commentStore.js`, `src\store\postsStore.js`, `src\store\spacesStore.js`
+- `src\components\ui\tooltip.jsx` ← `src\components\ui\sidebar.jsx`, `src\main.jsx`
+- `src\features\comments\components\ReplyComposer.jsx` ← `src\features\comments\components\CommentItem.jsx`, `src\features\comments\components\CommentThread.jsx`
+- `src\layouts\RootLayout.jsx` ← `src\app\router.jsx`
+- `src\pages\HomePage.jsx` ← `src\app\router.jsx`
+- `src\pages\AboutPage.jsx` ← `src\app\router.jsx`
+- `src\pages\NotFoundPage.jsx` ← `src\app\router.jsx`
+- `src\pages\PostPage.jsx` ← `src\app\router.jsx`
+</file>
+
+<file path=".codesight/libs.md">
+# Libraries
+
+- `src\features\feed\hooks\useFeedComposer.js` — function useFeedComposer: (sortBy) => void
+- `src\hooks\use-mobile.js` — function useIsMobile: () => void
+- `src\lib\error.js` — function getErrorMessage: (err, fallback) => void
+- `src\lib\normalise.js`
+  - function formatRelativeDate: (value) => void
+  - function normalisePost: (post) => void
+  - function normaliseComment: (comment) => void
+  - function buildCommentTree: (flatComments) => void
+- `src\lib\utils.js` — function cn: (...inputs) => void
+- `src\services\api.js`
+  - function getStoredAccessToken: () => void
+  - function storeAuthSession: ({...}, refreshToken, expiresAt, user, }) => void
+  - function clearAuthSession: () => void
+  - function getResponseData: (payload, fallback) => void
+  - const authAPI
+  - const spacesAPI
+  - _...2 more_
+</file>
+
+<file path=".codesight/middleware.md">
+# Middleware
+
+## auth
+- authStore — `src\store\authStore.js`
+</file>
 
 <file path="components.json">
 {
@@ -1242,6 +1486,94 @@ function Label({
 export { Label }
 </file>
 
+<file path="src/components/ui/markdown-renderer.jsx">
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { cn } from "@/lib/utils";
+
+export function MarkdownRenderer({ content, className }) {
+  if (!content) return null;
+
+  return (
+    <div
+      className={cn(
+        "text-sm leading-relaxed text-foreground space-y-2",
+        className,
+      )}
+    >
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h1: (props) => (
+            <h1
+              className="text-2xl font-bold mt-4 mb-2 break-words"
+              {...props}
+            />
+          ),
+          h2: (props) => (
+            <h2
+              className="text-xl font-bold mt-3 mb-2 break-words"
+              {...props}
+            />
+          ),
+          h3: (props) => (
+            <h3
+              className="text-lg font-semibold mt-2 mb-1 break-words"
+              {...props}
+            />
+          ),
+          p: (props) => (
+            <p className="my-1 leading-relaxed break-words" {...props} />
+          ),
+          a: (props) => (
+            <a
+              className="text-primary hover:underline break-all"
+              target="_blank"
+              rel="noopener noreferrer"
+              {...props}
+            />
+          ),
+
+          ul: (props) => (
+            <ul className="list-disc ps-5 my-2 space-y-1" {...props} />
+          ),
+          ol: (props) => (
+            <ol className="list-decimal ps-5 my-2 space-y-1" {...props} />
+          ),
+          li: (props) => <li className="leading-relaxed" {...props} />,
+          blockquote: (props) => (
+            <blockquote
+              className="border-s-4 border-primary/50 ps-3 italic text-muted-foreground my-2"
+              {...props}
+            />
+          ),
+          // Inline code
+          code: (props) => (
+            <code
+              className="font-mono text-xs rounded bg-muted px-1 py-0.5"
+              {...props}
+            />
+          ),
+          // Block code (strips the inline background/padding from the inner code tag)
+          pre: (props) => (
+            <pre
+              className="rounded-lg bg-muted p-3 overflow-x-auto my-2 font-mono text-xs [&>code]:bg-transparent [&>code]:p-0"
+              {...props}
+            />
+          ),
+          hr: (props) => <hr className="my-4 border-border" {...props} />,
+          img: (props) => (
+            <img className="rounded-lg max-w-full my-2" {...props} />
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}
+</file>
+
 <file path="src/components/ui/select.jsx">
 import * as React from "react"
 import { Select as SelectPrimitive } from "radix-ui"
@@ -2294,96 +2626,6 @@ export function NavMain({ items }) {
 }
 </file>
 
-<file path="src/layouts/root/components/nav-projects.jsx">
-"use client";
-
-import { Link, useLocation } from "react-router-dom";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
-import {
-  MoreHorizontalIcon,
-  FolderIcon,
-  ArrowRightIcon,
-  Trash2Icon,
-} from "lucide-react";
-
-export function NavProjects({ projects }) {
-  const { isMobile } = useSidebar();
-  const { pathname } = useLocation();
-
-  return (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>My Voteria</SidebarGroupLabel>
-      <SidebarMenu>
-        {projects.map((item) => {
-          const Icon = item.icon;
-          return (
-            <SidebarMenuItem key={item.name}>
-              <SidebarMenuButton asChild isActive={pathname === item.url}>
-                <Link to={item.url}>
-                  {Icon ? <Icon className="size-4" /> : null}
-                  <span>{item.name}</span>
-                </Link>
-              </SidebarMenuButton>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuAction
-                    showOnHover
-                    className="aria-expanded:bg-muted"
-                  >
-                    <MoreHorizontalIcon />
-                    <span className="sr-only">More</span>
-                  </SidebarMenuAction>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="w-fit"
-                  side={isMobile ? "bottom" : "right"}
-                  align={isMobile ? "end" : "start"}
-                >
-                  <DropdownMenuItem>
-                    <FolderIcon />
-                    <span>Open</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <ArrowRightIcon />
-                    <span>Share</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem variant="destructive">
-                    <Trash2Icon />
-                    <span>Remove</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-          );
-        })}
-        <SidebarMenuItem>
-          <SidebarMenuButton className="text-sidebar-foreground/70">
-            <MoreHorizontalIcon className="text-sidebar-foreground/70" />
-            <span>More</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    </SidebarGroup>
-  );
-}
-</file>
-
 <file path="src/lib/error.js">
 export function getErrorMessage(err, fallback = "Error") {
   const response = err?.response?.data ?? err?.data ?? {};
@@ -2537,6 +2779,473 @@ const NotFoundPage = () => {
 }
 
 export default NotFoundPage
+</file>
+
+<file path="src/pages/SubmitPage.jsx">
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { useAuthStore } from "@/store/authStore";
+import { useSpacesStore } from "@/store/spacesStore";
+import { usePostsStore } from "@/store/postsStore";
+import {
+  Bold,
+  Italic,
+  Link2,
+  Image as ImageIcon,
+  Quote,
+  Code,
+  List,
+  Eye,
+  Edit3,
+  FileText,
+  Link as LinkIcon,
+  BarChart3,
+  Send,
+} from "lucide-react";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+
+export default function SubmitPage() {
+  const { token, user } = useAuthStore();
+  const navigate = useNavigate();
+  const { spaces, fetchSpaces } = useSpacesStore();
+  const { createPost } = usePostsStore();
+
+  const [selectedSpaceId, setSelectedSpaceId] = useState("");
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+  const [activeTab, setActiveTab] = useState("post");
+  const [isPreview, setIsPreview] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const textareaRef = useRef(null);
+
+  // Redirect if not logged in & fetch spaces
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    if (spaces.length === 0) {
+      fetchSpaces(1);
+    }
+  }, [token, navigate, spaces.length, fetchSpaces]);
+
+  // Auto-select the first space if none is selected
+  useEffect(() => {
+    if (!selectedSpaceId && spaces.length > 0) {
+      setSelectedSpaceId(String(spaces[0].id));
+    }
+  }, [spaces, selectedSpaceId]);
+
+  // --- Markdown Toolbar Logic ---
+  const insertMarkdown = (before, after = "") => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = content.substring(start, end);
+
+    const newText =
+      content.substring(0, start) +
+      before +
+      selectedText +
+      after +
+      content.substring(end);
+
+    setContent(newText);
+
+    setTimeout(() => {
+      textarea.focus();
+      if (selectedText.length > 0) {
+        const newCursorPos =
+          start + before.length + selectedText.length + after.length;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+      } else {
+        const newCursorPos = start + before.length;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
+  };
+
+  // --- Submission Logic ---
+  const handleSubmit = async () => {
+    if (!title.trim()) {
+      setError("Title is required.");
+      return;
+    }
+    if (!selectedSpaceId) {
+      setError("Please select a space.");
+      return;
+    }
+    if (!content.trim()) {
+      setError("Cannot submit an empty Post!");
+    }
+    if (content.length > 1000) {
+      setError("Post content cannot exceed 1,000 characters.");
+      return;
+    }
+
+    let finalContent = content;
+    if (activeTab === "link") {
+      if (!linkUrl.trim()) {
+        setError("URL is required.");
+        return;
+      }
+      finalContent = `[${title}](${linkUrl})`;
+    }
+
+    setLoading(true);
+    setError(null);
+    const result = await createPost(
+      selectedSpaceId,
+      title.trim(),
+      finalContent,
+    );
+    setLoading(false);
+
+    if (result.success) {
+      navigate("/");
+    } else {
+      setError(result.error || "Failed to create post.");
+    }
+  };
+
+  // --- Safe Markdown Preview Renderer ---
+  const renderPreview = (text) => {
+    if (!text)
+      return "<p class='text-muted-foreground italic'>Nothing to preview</p>";
+    return <MarkdownRenderer content={text} />;
+  };
+
+  return (
+    <div className="mx-auto w-full max-w-4xl py-6 space-y-6">
+      {/* Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight">Create a Post</h1>
+        <p className="text-sm text-muted-foreground">
+          Share your thoughts, links, or media with the community.
+        </p>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+        {/* Main Editor Area */}
+        <div className="space-y-4">
+          <Card className="shadow-none">
+            <CardContent className="p-4 space-y-4">
+              {/* Space Selector */}
+              <div className="flex flex-wrap items-center gap-3">
+                <Select
+                  value={selectedSpaceId}
+                  onValueChange={setSelectedSpaceId}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Choose a space" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {spaces.map((space) => (
+                      <SelectItem key={space.id} value={String(space.id)}>
+                        v/{space.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Badge variant="outline" className="text-xs">
+                  Posting as u/{user?.username || "you"}
+                </Badge>
+              </div>
+
+              <Separator />
+
+              {/* Post Type Tabs */}
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="post" className="gap-2">
+                    <FileText className="size-4" /> Post
+                  </TabsTrigger>
+                  <TabsTrigger value="link" className="gap-2">
+                    <LinkIcon className="size-4" /> Link
+                  </TabsTrigger>
+                  <TabsTrigger value="poll" className="gap-2" disabled>
+                    <BarChart3 className="size-4" /> Poll
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="post" className="mt-4 space-y-4">
+                  <Input
+                    placeholder="Title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="text-lg font-medium h-11"
+                    maxLength={300}
+                  />
+
+                  {/* Markdown Toolbar */}
+                  <div className="flex items-center gap-1 p-1 border border-input rounded-lg bg-muted/30">
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => insertMarkdown("**", "**")}
+                      title="Bold"
+                    >
+                      <Bold className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => insertMarkdown("*", "*")}
+                      title="Italic"
+                    >
+                      <Italic className="size-4" />
+                    </Button>
+                    <Separator orientation="vertical" className="mx-1 h-5" />
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => insertMarkdown("[", "](url)")}
+                      title="Link"
+                    >
+                      <Link2 className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => insertMarkdown("![alt](", ")")}
+                      title="Image"
+                    >
+                      <ImageIcon className="size-4" />
+                    </Button>
+                    <Separator orientation="vertical" className="mx-1 h-5" />
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => insertMarkdown("> ")}
+                      title="Quote"
+                    >
+                      <Quote className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => insertMarkdown("`", "`")}
+                      title="Code"
+                    >
+                      <Code className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => insertMarkdown("- ")}
+                      title="Bullet List"
+                    >
+                      <List className="size-4" />
+                    </Button>
+
+                    <div className="ml-auto flex items-center gap-1">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={isPreview ? "ghost" : "secondary"}
+                        onClick={() => setIsPreview(false)}
+                        className="h-7 gap-1.5"
+                      >
+                        <Edit3 className="size-3.5" /> Write
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={isPreview ? "secondary" : "ghost"}
+                        onClick={() => setIsPreview(true)}
+                        className="h-7 gap-1.5"
+                      >
+                        <Eye className="size-3.5" /> Preview
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Textarea / Preview */}
+                  {isPreview ? (
+                    <div
+                      className="min-h-[300px] w-full rounded-md border border-input bg-background p-4 text-sm leading-relaxed max-w-none"
+                      dangerouslySetInnerHTML={{
+                        __html: renderPreview(content),
+                      }}
+                    />
+                  ) : (
+                    <div className="relative">
+                      <Textarea
+                        ref={textareaRef}
+                        placeholder="Text (optional)"
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        className="min-h-[300px] text-sm leading-relaxed resize-y pb-10"
+                        onKeyDown={(e) => {
+                          if (e.ctrlKey || e.metaKey) {
+                            if (e.key === "b") {
+                              e.preventDefault();
+                              insertMarkdown("**", "**");
+                            } else if (e.key === "i") {
+                              e.preventDefault();
+                              insertMarkdown("*", "*");
+                            } else if (e.key === "Enter") {
+                              e.preventDefault();
+                              // Prevent shortcut submission if over limit
+                              if (content.length <= 1000) handleSubmit();
+                            }
+                          }
+                        }}
+                      />
+                      {/* Character counter */}
+                      <div
+                        className={`absolute bottom-3 end-4 text-xs tabular-nums pointer-events-none ${content.length > 1000 ? "text-destructive font-medium" : "text-muted-foreground"}`}
+                      >
+                        {content.length.toLocaleString()} / 1,000
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="link" className="mt-4 space-y-4">
+                  <Input
+                    placeholder="Title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="text-lg font-medium h-11"
+                    maxLength={300}
+                  />
+                  <div className="relative">
+                    <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input
+                      placeholder="https://example.com"
+                      value={linkUrl}
+                      onChange={(e) => setLinkUrl(e.target.value)}
+                      className="h-11 ps-9"
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="poll" className="mt-4">
+                  <p className="text-center text-sm text-muted-foreground py-12">
+                    Polls are coming soon!
+                  </p>
+                </TabsContent>
+              </Tabs>
+
+              {error && (
+                <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {error}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Action Bar */}
+          <div className="flex items-center justify-end gap-3">
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={loading || !title.trim() || content.length > 1000}
+              className="gap-2"
+            >
+              {loading ? (
+                "Posting..."
+              ) : (
+                <>
+                  <Send className="size-4" /> Post
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Right Sidebar / Rules */}
+        <div className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+          <Card className="shadow-none border-dashed">
+            <CardContent className="p-4 space-y-3">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-primary text-xs">
+                  ?
+                </span>
+                Posting Guidelines
+              </h3>
+              <ul className="space-y-2 text-xs text-muted-foreground leading-relaxed">
+                <li className="flex gap-2">
+                  <span className="mt-1 size-1.5 rounded-full bg-primary/50 shrink-0" />
+                  Remember to be human and follow community rules.
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1 size-1.5 rounded-full bg-primary/50 shrink-0" />
+                  Use Markdown to format your text beautifully.
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1 size-1.5 rounded-full bg-primary/50 shrink-0" />
+                  No spam, self-promotion, or malicious links.
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-1 size-1.5 rounded-full bg-primary/50 shrink-0" />
+                  Choose the correct space for your content.
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-none bg-muted/30 border-none">
+            <CardContent className="p-4 text-xs text-muted-foreground space-y-2">
+              <p className="font-medium text-foreground">Keyboard Shortcuts</p>
+              <div className="flex justify-between">
+                <span>Bold</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-background border text-[10px] font-mono">
+                  Ctrl + B
+                </kbd>
+              </div>
+              <div className="flex justify-between">
+                <span>Italic</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-background border text-[10px] font-mono">
+                  Ctrl + I
+                </kbd>
+              </div>
+              <div className="flex justify-between">
+                <span>Submit</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-background border text-[10px] font-mono">
+                  Ctrl + Enter
+                </kbd>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
 </file>
 
 <file path=".gitignore">
@@ -2785,242 +3494,6 @@ CardFooter.displayName = "CardFooter";
 export { Card, CardHeader, CardContent, CardFooter };
 </file>
 
-<file path="src/features/comments/components/CommentItem.jsx">
-import { useState } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
-import {
-  MessageSquare,
-  ChevronDown,
-  ChevronUp,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { CommentVoter } from "./CommentVoter";
-import { ReplyComposer } from "./ReplyComposer";
-import { useAuthStore } from "@/store/authStore";
-import { useCommentStore } from "@/store/commentStore";
-
-const MAX_DEPTH = 6;
-
-export function CommentItem({ comment, postId, depth = 0 }) {
-  const [replying, setReplying] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [editBody, setEditBody] = useState(comment.body);
-
-  const toggleCollapse = useCommentStore((s) => s.toggleCollapse);
-  const deleteComment = useCommentStore((s) => s.deleteComment);
-  const editComment = useCommentStore((s) => s.editComment);
-  const currentUsername = useAuthStore((s) => s.user?.username);
-
-  const author = comment.author ?? "u/??";
-  const isCurrentUser = author === `u/${currentUsername}`;
-
-  const handleEdit = async () => {
-    if (!editBody.trim() || editBody === comment.body) {
-      setEditing(false);
-      return;
-    }
-    await editComment(postId, comment.id, editBody.trim());
-    setEditing(false);
-  };
-
-  const initials = author.startsWith("u/")
-    ? author.slice(2, 4).toUpperCase()
-    : author.slice(0, 2).toUpperCase();
-
-  return (
-    <div className={cn("group/comment flex gap-2.5", depth > 0 && "mt-3")}>
-      {/* collapse gutter */}
-      <div className="flex flex-col items-center gap-0">
-        <Avatar
-          size="sm"
-          className="mt-0.5 shrink-0 cursor-pointer"
-          onClick={() => toggleCollapse(postId, comment.id)}
-        >
-          <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
-        </Avatar>
-        {!comment.collapsed && (comment.children?.length > 0 || true) && (
-          <button
-            onClick={() => toggleCollapse(postId, comment.id)}
-            aria-label="Collapse thread"
-            className="mt-1 w-px flex-1 rounded-full bg-border transition-colors hover:bg-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-          />
-        )}
-      </div>
-
-      {/* content */}
-      <div className="min-w-0 flex-1 pb-1">
-        {/* header */}
-        <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">{author}</span>
-          <span>{comment.votes} points</span>
-          <span>·</span>
-          <span>{comment.createdAt}</span>
-          {comment.edited && <span className="italic">(edited)</span>}
-
-          <div className="ml-auto flex items-center opacity-0 transition-opacity group-hover/comment:opacity-100">
-            <Button
-              size="icon-xs"
-              variant="ghost"
-              className="h-6 w-6"
-              aria-label={comment.collapsed ? "Expand" : "Collapse"}
-              onClick={() => toggleCollapse(postId, comment.id)}
-            >
-              {comment.collapsed ? (
-                <ChevronDown className="size-3.5" />
-              ) : (
-                <ChevronUp className="size-3.5" />
-              )}
-            </Button>
-
-            {isCurrentUser && !comment.deleted && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    size="icon-xs"
-                    variant="ghost"
-                    className="h-6 w-6"
-                    aria-label="Comment options"
-                  >
-                    <MoreHorizontal className="size-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-36">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setEditing(true);
-                      setEditBody(comment.body);
-                    }}
-                  >
-                    <Pencil className="size-3.5" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => deleteComment(postId, comment.id)}
-                  >
-                    <Trash2 className="size-3.5" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </div>
-
-        {/* collapsed view */}
-        {comment.collapsed ? (
-          <button
-            className="mt-1 text-xs text-muted-foreground hover:text-foreground"
-            onClick={() => toggleCollapse(postId, comment.id)}
-          >
-            {comment.children?.length
-              ? `[+] ${comment.children.length} ${comment.children.length === 1 ? "reply" : "replies"} collapsed`
-              : "[+] comment collapsed"}
-          </button>
-        ) : (
-          <>
-            {/* body */}
-            {editing ? (
-              <div className="mt-2 space-y-2">
-                <Textarea
-                  autoFocus
-                  value={editBody}
-                  onChange={(e) => setEditBody(e.target.value)}
-                  className="min-h-20 text-sm"
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") setEditing(false);
-                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
-                      handleEdit();
-                  }}
-                />
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleEdit}>
-                    Save
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setEditing(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <p
-                className={cn(
-                  "mt-1 text-sm leading-6",
-                  comment.deleted && "italic text-muted-foreground",
-                )}
-              >
-                {comment.body}
-              </p>
-            )}
-
-            {/* actions */}
-            {!comment.deleted && (
-              <div className="mt-1.5 flex items-center gap-1">
-                <CommentVoter
-                  postId={postId}
-                  commentId={comment.id}
-                  votes={comment.votes}
-                  userVote={comment.userVote ?? 0}
-                />
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  className="h-6 px-2 text-xs text-muted-foreground"
-                  onClick={() => setReplying((v) => !v)}
-                >
-                  <MessageSquare className="size-3.5" />
-                  Reply
-                </Button>
-              </div>
-            )}
-
-            {/* reply composer */}
-            {replying && (
-              <ReplyComposer
-                postId={postId}
-                parentId={comment.id}
-                onClose={() => setReplying(false)}
-              />
-            )}
-
-            {/* recursive children */}
-            {comment.children?.length > 0 && (
-              <div
-                className={cn("mt-1 space-y-0", depth >= MAX_DEPTH && "pl-0")}
-              >
-                {comment.children.map((child) => (
-                  <CommentItem
-                    key={child.id}
-                    comment={child}
-                    postId={postId}
-                    depth={depth + 1}
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-</file>
-
 <file path="src/features/comments/components/CommentThread.jsx">
 import { useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
@@ -3263,6 +3736,96 @@ export { FeedComposer } from "./components/feed-composer";
 export { FeedFilters } from "./components/feed-filters";
 export { FeedPostCard } from "./components/feed-post-card";
 export { FeedRightRail } from "./components/feed-right-rail";
+</file>
+
+<file path="src/layouts/root/components/nav-projects.jsx">
+"use client";
+
+import { Link, useLocation } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import {
+  MoreHorizontalIcon,
+  FolderIcon,
+  ArrowRightIcon,
+  Trash2Icon,
+} from "lucide-react";
+
+export function NavProjects({ projects = [] }) {
+  const { isMobile } = useSidebar();
+  const { pathname } = useLocation();
+
+  return (
+    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+      <SidebarGroupLabel>My Voteria</SidebarGroupLabel>
+      <SidebarMenu>
+        {projects.map((item) => {
+          const Icon = item.icon;
+          return (
+            <SidebarMenuItem key={item.name}>
+              <SidebarMenuButton asChild isActive={pathname === item.url}>
+                <Link to={item.url}>
+                  {Icon ? <Icon className="size-4" /> : null}
+                  <span>{item.name}</span>
+                </Link>
+              </SidebarMenuButton>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuAction
+                    showOnHover
+                    className="aria-expanded:bg-muted"
+                  >
+                    <MoreHorizontalIcon />
+                    <span className="sr-only">More</span>
+                  </SidebarMenuAction>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="w-fit"
+                  side={isMobile ? "bottom" : "right"}
+                  align={isMobile ? "end" : "start"}
+                >
+                  <DropdownMenuItem>
+                    <FolderIcon />
+                    <span>Open</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <ArrowRightIcon />
+                    <span>Share</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive">
+                    <Trash2Icon />
+                    <span>Remove</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
+          );
+        })}
+        <SidebarMenuItem>
+          <SidebarMenuButton className="text-sidebar-foreground/70">
+            <MoreHorizontalIcon className="text-sidebar-foreground/70" />
+            <span>More</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </SidebarGroup>
+  );
+}
 </file>
 
 <file path="src/main.jsx">
@@ -3978,6 +4541,243 @@ export {
 };
 </file>
 
+<file path="src/features/comments/components/CommentItem.jsx">
+import { useState } from "react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import {
+  MessageSquare,
+  ChevronDown,
+  ChevronUp,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { CommentVoter } from "./CommentVoter";
+import { ReplyComposer } from "./ReplyComposer";
+import { useAuthStore } from "@/store/authStore";
+import { useCommentStore } from "@/store/commentStore";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+
+const MAX_DEPTH = 6;
+
+export function CommentItem({ comment, postId, depth = 0 }) {
+  const [replying, setReplying] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editBody, setEditBody] = useState(comment.body);
+
+  const toggleCollapse = useCommentStore((s) => s.toggleCollapse);
+  const deleteComment = useCommentStore((s) => s.deleteComment);
+  const editComment = useCommentStore((s) => s.editComment);
+  const currentUsername = useAuthStore((s) => s.user?.username);
+
+  const author = comment.author ?? "u/??";
+  const isCurrentUser = author === `u/${currentUsername}`;
+
+  const handleEdit = async () => {
+    if (!editBody.trim() || editBody === comment.body) {
+      setEditing(false);
+      return;
+    }
+    await editComment(postId, comment.id, editBody.trim());
+    setEditing(false);
+  };
+
+  const initials = author.startsWith("u/")
+    ? author.slice(2, 4).toUpperCase()
+    : author.slice(0, 2).toUpperCase();
+
+  return (
+    <div className={cn("group/comment flex gap-2.5", depth > 0 && "mt-3")}>
+      {/* collapse gutter */}
+      <div className="flex flex-col items-center gap-0">
+        <Avatar
+          size="sm"
+          className="mt-0.5 shrink-0 cursor-pointer"
+          onClick={() => toggleCollapse(postId, comment.id)}
+        >
+          <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+        </Avatar>
+        {!comment.collapsed && (comment.children?.length > 0 || true) && (
+          <button
+            onClick={() => toggleCollapse(postId, comment.id)}
+            aria-label="Collapse thread"
+            className="mt-1 w-px flex-1 rounded-full bg-border transition-colors hover:bg-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          />
+        )}
+      </div>
+
+      {/* content */}
+      <div className="min-w-0 flex-1 pb-1">
+        {/* header */}
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">{author}</span>
+          <span>{comment.votes} points</span>
+          <span>·</span>
+          <span>{comment.createdAt}</span>
+          {comment.edited && <span className="italic">(edited)</span>}
+
+          <div className="ml-auto flex items-center opacity-0 transition-opacity group-hover/comment:opacity-100">
+            <Button
+              size="icon-xs"
+              variant="ghost"
+              className="h-6 w-6"
+              aria-label={comment.collapsed ? "Expand" : "Collapse"}
+              onClick={() => toggleCollapse(postId, comment.id)}
+            >
+              {comment.collapsed ? (
+                <ChevronDown className="size-3.5" />
+              ) : (
+                <ChevronUp className="size-3.5" />
+              )}
+            </Button>
+
+            {isCurrentUser && !comment.deleted && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="icon-xs"
+                    variant="ghost"
+                    className="h-6 w-6"
+                    aria-label="Comment options"
+                  >
+                    <MoreHorizontal className="size-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-36">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setEditing(true);
+                      setEditBody(comment.body);
+                    }}
+                  >
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => deleteComment(postId, comment.id)}
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        </div>
+
+        {/* collapsed view */}
+        {comment.collapsed ? (
+          <button
+            className="mt-1 text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => toggleCollapse(postId, comment.id)}
+          >
+            {comment.children?.length
+              ? `[+] ${comment.children.length} ${comment.children.length === 1 ? "reply" : "replies"} collapsed`
+              : "[+] comment collapsed"}
+          </button>
+        ) : (
+          <>
+            {/* body */}
+            {editing ? (
+              <div className="mt-2 space-y-2">
+                <Textarea
+                  autoFocus
+                  value={editBody}
+                  onChange={(e) => setEditBody(e.target.value)}
+                  className="min-h-20 text-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setEditing(false);
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
+                      handleEdit();
+                  }}
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleEdit}>
+                    Save
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setEditing(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p
+                className={cn(
+                  "mt-1 text-sm leading-6",
+                  comment.deleted && "italic text-muted-foreground",
+                )}
+              >
+                {comment.body}
+              </p>
+            )}
+
+            {/* actions */}
+            {!comment.deleted && (
+              <div className="mt-1.5 flex items-center gap-1">
+                <CommentVoter
+                  postId={postId}
+                  commentId={comment.id}
+                  votes={comment.votes}
+                  userVote={comment.userVote ?? 0}
+                />
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  className="h-6 px-2 text-xs text-muted-foreground"
+                  onClick={() => setReplying((v) => !v)}
+                >
+                  <MessageSquare className="size-3.5" />
+                  Reply
+                </Button>
+              </div>
+            )}
+
+            {/* reply composer */}
+            {replying && (
+              <ReplyComposer
+                postId={postId}
+                parentId={comment.id}
+                onClose={() => setReplying(false)}
+              />
+            )}
+
+            {/* recursive children */}
+            {comment.children?.length > 0 && (
+              <div
+                className={cn("mt-1 space-y-0", depth >= MAX_DEPTH && "pl-0")}
+              >
+                {comment.children.map((child) => (
+                  <CommentItem
+                    key={child.id}
+                    comment={child}
+                    postId={postId}
+                    depth={depth + 1}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+</file>
+
 <file path="src/features/feed/components/feed-filters.jsx">
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -4027,56 +4827,6 @@ export function FeedFilters({ activeFilter, onFilterChange }) {
     </div>
   );
 }
-</file>
-
-<file path="src/lib/voteria-data.js">
-import {
-  Bell,
-  Bookmark,
-  Flame,
-  Home,
-  MessageSquare,
-  PlusCircle,
-  TrendingUp,
-  Zap,
-} from "lucide-react";
-
-export const sidebarData = {
-  navMain: [
-    {
-      title: "Home",
-      url: "/",
-      icon: Home,
-    },
-  ],
-  projects: [
-    {
-      name: "Create Post",
-      url: "/submit",
-      icon: PlusCircle,
-    },
-    {
-      name: "Saved",
-      url: "/saved",
-      icon: Bookmark,
-    },
-    {
-      name: "Messages",
-      url: "/messages",
-      icon: MessageSquare,
-    },
-    {
-      name: "Notifications",
-      url: "/notifications",
-      icon: Bell,
-    },
-    {
-      name: "Drafts",
-      url: "/drafts",
-      icon: Zap,
-    },
-  ],
-};
 </file>
 
 <file path="src/pages/AuthPage.jsx">
@@ -4201,116 +4951,6 @@ export default function AuthPage() {
 }
 </file>
 
-<file path="src/store/postsStore.js">
-import { create } from "zustand";
-import { getResponseData, postsAPI } from "../services/api";
-import { normalisePost } from "@/lib/normalise";
-import { getErrorMessage } from "@/lib/error";
-
-export const usePostsStore = create((set, get) => ({
-  posts: [],
-  currentPost: null,
-  loading: false,
-  error: null,
-  page: 1,
-  hasMore: true,
-
-  fetchPosts: async (page = 1, sort_by = "") => {
-    set({ loading: true, error: null });
-    try {
-      const { data } = await postsAPI.getAll(page, sort_by);
-      const incoming = getResponseData(data, []).map(normalisePost);
-      set({
-        posts: page === 1 ? incoming : [...get().posts, ...incoming],
-        loading: false,
-        page,
-        hasMore: incoming.length > 0,
-      });
-    } catch (err) {
-      set({
-        loading: false,
-        error: getErrorMessage(err, "Failed to load posts"),
-      });
-    }
-  },
-
-  fetchPost: async (postId) => {
-    set({ currentPost: null, loading: true, error: null });
-    try {
-      const { data } = await postsAPI.getById(postId);
-      set({
-        currentPost: normalisePost(getResponseData(data, null)),
-        loading: false,
-      });
-    } catch (err) {
-      set({
-        loading: false,
-        error: getErrorMessage(err, "Failed to load post"),
-      });
-    }
-  },
-
-  createPost: async (subId, title, content, sort_by = "") => {
-    try {
-      await postsAPI.create(subId, title, content);
-      // Refresh first page
-      await get().fetchPosts(1, sort_by);
-      return { success: true };
-    } catch (err) {
-      const msg = getErrorMessage(err, "Failed to create post");
-      return { success: false, error: msg };
-    }
-  },
-
-  vote: async (postId, direction) => {
-    const existing =
-      get().posts.find((p) => String(p.id) === String(postId)) ??
-      (String(get().currentPost?.id) === String(postId)
-        ? get().currentPost
-        : null);
-    const prev = existing?.userVote ?? 0;
-    const next = prev === direction ? 0 : direction;
-
-    // Optimistic update
-    const update = (posts, fromVote, toVote) =>
-      posts.map((p) => {
-        if (String(p.id) !== String(postId)) return p;
-        const delta = toVote - fromVote;
-        return {
-          ...p,
-          score: (p.score ?? p.votes ?? 0) + delta,
-          votes: (p.votes ?? p.score ?? 0) + delta,
-          userVote: toVote,
-          _userVote: toVote,
-        };
-      });
-
-    set((s) => ({ posts: update(s.posts, prev, next) }));
-    if (get().currentPost && String(get().currentPost.id) === String(postId)) {
-      set((s) => ({ currentPost: update([s.currentPost], prev, next)[0] }));
-    }
-
-    try {
-      if (next === 0) {
-        await postsAPI.deleteVote(postId);
-      } else if (direction === 1) {
-        await postsAPI.upvote(postId);
-      } else {
-        await postsAPI.downvote(postId);
-      }
-    } catch {
-      set((s) => ({ posts: update(s.posts, next, prev) }));
-      if (
-        get().currentPost &&
-        String(get().currentPost.id) === String(postId)
-      ) {
-        set((s) => ({ currentPost: update([s.currentPost], next, prev)[0] }));
-      }
-    }
-  },
-}));
-</file>
-
 <file path="vite.config.js">
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
@@ -4326,45 +4966,6 @@ export default defineConfig({
     },
   },
 });
-</file>
-
-<file path="src/app/router.jsx">
-import { createBrowserRouter } from "react-router-dom";
-import RootLayout from "../layouts/RootLayout";
-import HomePage from "../pages/HomePage";
-import AboutPage from "../pages/AboutPage";
-import NotFoundPage from "../pages/NotFoundPage";
-import PostPage from "../pages/PostPage";
-import AuthPage from "../pages/AuthPage";
-
-export const router = createBrowserRouter([
-  {
-    path: "/login",
-    element: <AuthPage />,
-  },
-  {
-    path: "/",
-    element: <RootLayout />,
-    children: [
-      {
-        index: true,
-        element: <HomePage />,
-      },
-      {
-        path: "about",
-        element: <AboutPage />,
-      },
-      {
-        path: "post/:postId",
-        element: <PostPage />,
-      },
-    ],
-  },
-  {
-    path: "*",
-    element: <NotFoundPage />,
-  },
-]);
 </file>
 
 <file path="src/layouts/root/components/site-header.jsx">
@@ -4580,170 +5181,54 @@ function AccountMenu({ user }) {
 }
 </file>
 
-<file path="src/pages/PostPage.jsx">
-import { useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowUp, ArrowDown, Bookmark, Share2, ArrowLeft } from "lucide-react";
-import { CommentThread } from "@/features/comments";
-import { useAuthStore } from "@/store/authStore";
-import { usePostsStore } from "@/store/postsStore";
-import { cn } from "@/lib/utils";
+<file path="src/lib/voteria-data.js">
+import {
+  Bell,
+  Bookmark,
+  Flame,
+  Home,
+  MessageSquare,
+  PlusCircle,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
 
-export default function PostPage() {
-  const { postId } = useParams();
-  const { currentPost, loading, error, fetchPost, vote } = usePostsStore();
-  const token = useAuthStore((s) => s.token);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchPost(postId);
-  }, [fetchPost, postId]);
-
-  const handleVote = (dir) => {
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-    vote(postId, dir);
-  };
-
-  if (loading && !currentPost) {
-    return (
-      <div className="mx-auto max-w-3xl space-y-4">
-        <Skeleton className="h-8 w-24" />
-        <Card className="shadow-none">
-          <div className="p-6 space-y-4">
-            <div className="flex gap-3">
-              <Skeleton className="size-8 rounded-full" />
-              <Skeleton className="h-4 w-48" />
-            </div>
-            <Skeleton className="h-7 w-3/4" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-2/3" />
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="mx-auto max-w-3xl space-y-4">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/">
-            <ArrowLeft className="size-4" /> Back
-          </Link>
-        </Button>
-        <p className="text-sm text-destructive">{error}</p>
-      </div>
-    );
-  }
-
-  if (!currentPost) return null;
-
-  const userVote = currentPost.userVote ?? 0;
-  const community = currentPost.community || "general";
-  const author = currentPost.author ?? "u/unknown";
-  const score = currentPost.score ?? 0;
-  const tags = currentPost.tags ?? [];
-  const createdAt = currentPost.createdAt;
-
-  return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      <Button variant="ghost" size="sm" asChild>
-        <Link to="/">
-          <ArrowLeft className="size-4" /> Back
-        </Link>
-      </Button>
-
-      <Card className="shadow-none">
-        <article className="p-4 sm:p-6">
-          {/* Meta */}
-          <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-            <Avatar size="sm">
-              <AvatarFallback>
-                {community.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="font-medium text-foreground">v/{community}</span>
-            <span>by {author}</span>
-            {createdAt && <span>{createdAt}</span>}
-          </div>
-
-          {/* Title */}
-          <h1 className="mt-3 text-xl font-bold leading-7 text-card-foreground">
-            {currentPost.title}
-          </h1>
-
-          {/* Body */}
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {currentPost.content}
-          </p>
-
-          {/* Tags */}
-          {tags.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {tags.map((tag) => (
-                <Badge key={tag}>{tag}</Badge>
-              ))}
-            </div>
-          )}
-
-          <Separator className="my-4" />
-
-          {/* Actions */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center rounded-lg bg-muted p-0.5">
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                aria-label="Upvote"
-                onClick={() => handleVote(1)}
-                className={cn(userVote === 1 && "text-primary")}
-              >
-                <ArrowUp className="size-4" />
-              </Button>
-              <span
-                className={cn(
-                  "min-w-8 px-1 text-center text-xs font-semibold tabular-nums",
-                  userVote === 1 && "text-primary",
-                  userVote === -1 && "text-destructive",
-                )}
-              >
-                {score}
-              </span>
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                aria-label="Downvote"
-                onClick={() => handleVote(-1)}
-                className={cn(userVote === -1 && "text-destructive")}
-              >
-                <ArrowDown className="size-4" />
-              </Button>
-            </div>
-            <Button size="sm" variant="ghost" className="px-2">
-              <Share2 className="size-4" />
-              Share
-            </Button>
-            <Button size="icon-sm" variant="ghost" aria-label="Save">
-              <Bookmark className="size-4" />
-            </Button>
-          </div>
-
-          {/* Comments */}
-          <CommentThread postId={String(currentPost.id)} />
-        </article>
-      </Card>
-    </div>
-  );
-}
+export const sidebarData = {
+  navMain: [
+    {
+      title: "Home",
+      url: "/",
+      icon: Home,
+    },
+  ],
+  projects: [
+    {
+      name: "Create Post",
+      url: "/submit",
+      icon: PlusCircle,
+    },
+    {
+      name: "Saved",
+      url: "/saved",
+      icon: Bookmark,
+    },
+    {
+      name: "Messages",
+      url: "/messages",
+      icon: MessageSquare,
+    },
+    {
+      name: "Notifications",
+      url: "/notifications",
+      icon: Bell,
+    },
+    {
+      name: "Drafts",
+      url: "/drafts",
+      icon: Zap,
+    },
+  ],
+};
 </file>
 
 <file path="src/store/authStore.js">
@@ -4876,52 +5361,27 @@ export const useAuthStore = create((set) => ({
 }));
 </file>
 
-<file path="src/store/spacesStore.js">
+<file path="src/store/postsStore.js">
 import { create } from "zustand";
-import { getResponseData, spacesAPI } from "../services/api";
+import { getResponseData, postsAPI } from "../services/api";
+import { normalisePost } from "@/lib/normalise";
 import { getErrorMessage } from "@/lib/error";
 
-function slugify(input) {
-  if (!input) return "";
-  return input
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .substring(0, 50);
-}
-
-function normaliseSpace(space) {
-  return {
-    ...space,
-    id: space.id,
-    username: space.username,
-    title: space.username ?? "کیر",
-    description: space.description ?? "",
-    subscribersCount: space.subscribersCount ?? 0,
-    views: space.views ?? 0,
-  };
-}
-
-export const useSpacesStore = create((set, get) => ({
-  spaces: [],
-  subscribedSpaces: [],
+export const usePostsStore = create((set, get) => ({
+  posts: [],
+  currentPost: null,
   loading: false,
-  subscriptionsLoading: false,
   error: null,
-  subscriptionsError: null,
   page: 1,
   hasMore: true,
-  subscribeLoading: false,
 
-  fetchSpaces: async (page = 1, sort_by = "") => {
+  fetchPosts: async (page = 1, sort_by = "") => {
     set({ loading: true, error: null });
     try {
-      const { data } = await spacesAPI.getAll(page, sort_by);
-      const incoming = getResponseData(data, []).map(normaliseSpace);
+      const { data } = await postsAPI.getAll(page, sort_by);
+      const incoming = getResponseData(data, []).map(normalisePost);
       set({
-        spaces: page === 1 ? incoming : [...get().spaces, ...incoming],
+        posts: page === 1 ? incoming : [...get().posts, ...incoming],
         loading: false,
         page,
         hasMore: incoming.length > 0,
@@ -4929,197 +5389,148 @@ export const useSpacesStore = create((set, get) => ({
     } catch (err) {
       set({
         loading: false,
-        error: getErrorMessage(err, "Failed to load spaces"),
+        error: getErrorMessage(err, "Failed to load posts"),
       });
     }
   },
-
-  fetchSubscriptions: async () => {
-    set({ subscriptionsLoading: true, subscriptionsError: null });
+  fetchHome: async (page = 1, sort_by = "") => {
+    set({ loading: true, error: null });
     try {
-      const { data } = await spacesAPI.getSubscriptions();
-      const incoming = getResponseData(data, []).map(normaliseSpace);
-      set({ subscribedSpaces: incoming, subscriptionsLoading: false });
+      const { data } = await postsAPI.getHomePage(page, sort_by);
+      const incoming = getResponseData(data, []).map(normalisePost);
+      set({
+        posts: page === 1 ? incoming : [...get().posts, ...incoming],
+        loading: false,
+        page,
+        hasMore: incoming.length > 0,
+      });
     } catch (err) {
       set({
-        subscriptionsLoading: false,
-        subscriptionsError: getErrorMessage(
-          err,
-          "Failed to load subscriptions",
-        ),
+        loading: false,
+        error: getErrorMessage(err, "Failed to load posts"),
       });
     }
   },
 
-  subscribeToSpace: async (spaceId) => {
-    set({ subscribeLoading: true, error: null });
+  fetchPost: async (postId) => {
+    set({ currentPost: null, loading: true, error: null });
     try {
-      await spacesAPI.subscribe(spaceId);
-      await get().fetchSubscriptions();
-      await get().fetchSpaces(1);
-      set({ subscribeLoading: false });
+      const { data } = await postsAPI.getById(postId);
+      set({
+        currentPost: normalisePost(getResponseData(data, null)),
+        loading: false,
+      });
+    } catch (err) {
+      set({
+        loading: false,
+        error: getErrorMessage(err, "Failed to load post"),
+      });
+    }
+  },
+
+  createPost: async (subId, title, content, sort_by = "") => {
+    try {
+      await postsAPI.create(subId, title, content);
+      // Refresh first page
+      await get().fetchPosts(1, sort_by);
       return { success: true };
     } catch (err) {
-      const msg = getErrorMessage(err, "Failed to subscribe to space");
-      set({ subscribeLoading: false, error: msg });
+      const msg = getErrorMessage(err, "Failed to create post");
       return { success: false, error: msg };
     }
   },
 
-  createSpace: async (title, description) => {
-    set({ createLoading: true, createError: null });
+  vote: async (postId, direction) => {
+    const existing =
+      get().posts.find((p) => String(p.id) === String(postId)) ??
+      (String(get().currentPost?.id) === String(postId)
+        ? get().currentPost
+        : null);
+    const prev = existing?.userVote ?? 0;
+    const next = prev === direction ? 0 : direction;
+
+    // Optimistic update
+    const update = (posts, fromVote, toVote) =>
+      posts.map((p) => {
+        if (String(p.id) !== String(postId)) return p;
+        const delta = toVote - fromVote;
+        return {
+          ...p,
+          score: (p.score ?? p.votes ?? 0) + delta,
+          votes: (p.votes ?? p.score ?? 0) + delta,
+          userVote: toVote,
+          _userVote: toVote,
+        };
+      });
+
+    set((s) => ({ posts: update(s.posts, prev, next) }));
+    if (get().currentPost && String(get().currentPost.id) === String(postId)) {
+      set((s) => ({ currentPost: update([s.currentPost], prev, next)[0] }));
+    }
+
     try {
-      const username = slugify(title);
-      await spacesAPI.create(title, description, username);
-      await get().fetchSpaces(1);
-      set({ createLoading: false });
-      return { success: true };
-    } catch (err) {
-      const msg = getErrorMessage(err, "Failed to create space");
-      set({ createLoading: false, createError: msg });
-      return { success: false, error: msg };
+      if (next === 0) {
+        await postsAPI.deleteVote(postId);
+      } else if (direction === 1) {
+        await postsAPI.upvote(postId);
+      } else {
+        await postsAPI.downvote(postId);
+      }
+    } catch {
+      set((s) => ({ posts: update(s.posts, next, prev) }));
+      if (
+        get().currentPost &&
+        String(get().currentPost.id) === String(postId)
+      ) {
+        set((s) => ({ currentPost: update([s.currentPost], next, prev)[0] }));
+      }
     }
   },
 }));
-
-export default useSpacesStore;
 </file>
 
-<file path="src/features/feed/components/feed-post-card.jsx">
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { usePostsStore } from "@/store/postsStore";
-import { useAuthStore } from "@/store/authStore";
-import {
-  ArrowDown,
-  ArrowUp,
-  Bookmark,
-  MessageCircle,
-  MoreHorizontal,
-  Share2,
-} from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
+<file path="src/app/router.jsx">
+import { createBrowserRouter } from "react-router-dom";
+import RootLayout from "../layouts/RootLayout";
+import HomePage from "../pages/HomePage";
+import AboutPage from "../pages/AboutPage";
+import NotFoundPage from "../pages/NotFoundPage";
+import PostPage from "../pages/PostPage";
+import AuthPage from "../pages/AuthPage";
+import SubmitPage from "../pages/SubmitPage";
 
-export function FeedPostCard({ post }) {
-  const { vote } = usePostsStore();
-  const { token } = useAuthStore();
-  const navigate = useNavigate();
-
-  const userVote = post.userVote ?? 0;
-
-  const handleVote = (dir) => {
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-    vote(post.id, dir);
-  };
-
-  const community = post.community || "general";
-
-  return (
-    <Card className="shadow-none transition-colors hover:border-ring/40">
-      <article className="p-3 sm:p-4">
-        <div className="flex min-w-0 items-start gap-3">
-          <Avatar size="sm" className="mt-0.5">
-            <AvatarFallback>
-              {(post.community ?? "??").slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-              <span className="truncate font-medium text-foreground">
-                v/{community}
-              </span>
-              <span>by {post.author}</span>
-              {post.createdAt && <span>{post.createdAt}</span>}
-            </div>
-            <h2 className="mt-1 text-base font-semibold leading-6 text-card-foreground sm:text-lg">
-              <Link to={`/post/${post.id}`} className="hover:underline">
-                {post.title}
-              </Link>
-            </h2>
-          </div>
-          <Button size="icon-sm" variant="ghost" aria-label="More post options">
-            <MoreHorizontal className="size-4" />
-          </Button>
-        </div>
-
-        {post.description && (
-          <p className="mt-3 text-sm leading-6 text-muted-foreground line-clamp-3">
-            {post.description}
-          </p>
-        )}
-
-        {post.tags?.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {post.tags.map((tag) => (
-              <Badge key={tag} variant="default">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        )}
-
-        <Separator className="my-3" />
-
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center rounded-lg bg-muted p-0.5">
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              aria-label="Upvote"
-              onClick={() => handleVote(1)}
-              className={cn(userVote === 1 && "text-primary")}
-            >
-              <ArrowUp className="size-4" />
-            </Button>
-            <span
-              className={cn(
-                "min-w-8 px-1 text-center text-xs font-semibold tabular-nums",
-                userVote === 1 && "text-primary",
-                userVote === -1 && "text-destructive",
-              )}
-            >
-              {post.votes ?? 0}
-            </span>
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              aria-label="Downvote"
-              onClick={() => handleVote(-1)}
-              className={cn(userVote === -1 && "text-destructive")}
-            >
-              <ArrowDown className="size-4" />
-            </Button>
-          </div>
-
-          <div className="flex min-w-0 items-center gap-1">
-            <Button size="sm" variant="ghost" className="px-2" asChild>
-              <Link to={`/post/${post.id}`}>
-                <MessageCircle className="size-4" />
-                <span className="hidden min-[420px]:inline">
-                  {post.comments ?? ""}
-                </span>
-              </Link>
-            </Button>
-            <Button size="sm" variant="ghost" className="px-2">
-              <Share2 className="size-4" />
-              <span className="hidden sm:inline">Share</span>
-            </Button>
-            <Button size="icon-sm" variant="ghost" aria-label="Save post">
-              <Bookmark className="size-4" />
-            </Button>
-          </div>
-        </div>
-      </article>
-    </Card>
-  );
-}
+export const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <AuthPage />,
+  },
+  {
+    path: "/",
+    element: <RootLayout />,
+    children: [
+      {
+        index: true,
+        element: <HomePage />,
+      },
+      {
+        path: "about",
+        element: <AboutPage />,
+      },
+      {
+        path: "post/:postId",
+        element: <PostPage />,
+      },
+      {
+        path: "submit",
+        element: <SubmitPage />,
+      },
+    ],
+  },
+  {
+    path: "*",
+    element: <NotFoundPage />,
+  },
+]);
 </file>
 
 <file path="src/features/feed/components/feed-right-rail.jsx">
@@ -5500,183 +5911,226 @@ body {
 }
 </file>
 
-<file path="src/services/api.js">
-import axios from "axios";
+<file path="src/pages/PostPage.jsx">
+import { useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  ArrowUp,
+  ArrowDown,
+  Bookmark,
+  Share2,
+  ArrowLeft,
+  Calendar,
+} from "lucide-react";
+import { CommentThread } from "@/features/comments";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+import { useAuthStore } from "@/store/authStore";
+import { usePostsStore } from "@/store/postsStore";
+import { cn } from "@/lib/utils";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api/v1";
-const ACCESS_TOKEN_KEY = "access_token";
-const REFRESH_TOKEN_KEY = "refresh_token";
-const ACCESS_TOKEN_EXPIRES_AT_KEY = "access_token_expires_at";
-const USER_KEY = "user";
+export default function PostPage() {
+  const { postId } = useParams();
+  const { currentPost, loading, error, fetchPost, vote } = usePostsStore();
+  const token = useAuthStore((s) => s.token);
+  const navigate = useNavigate();
 
-export function getStoredAccessToken() {
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
-}
+  useEffect(() => {
+    fetchPost(postId);
+  }, [fetchPost, postId]);
 
-export function storeAuthSession({
-  accessToken,
-  refreshToken,
-  expiresAt,
-  user,
-}) {
-  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-
-  if (refreshToken) {
-    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-  } else {
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-  }
-
-  if (expiresAt) {
-    localStorage.setItem(ACCESS_TOKEN_EXPIRES_AT_KEY, String(expiresAt));
-  } else {
-    localStorage.removeItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
-  }
-
-  if (user) {
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(USER_KEY);
-  }
-}
-
-export function clearAuthSession() {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
-  localStorage.removeItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
-  localStorage.removeItem(USER_KEY);
-}
-
-function shouldClearAuth(status, code) {
-  return status === 401 || code === "invalid_token";
-}
-
-function redirectToLogin() {
-  if (window.location.pathname !== "/login") {
-    window.location.href = "/login";
-  }
-}
-
-function getAppStatus(response) {
-  const status = response?.data?.status;
-  return typeof status === "number" ? status : 0;
-}
-
-function buildAppError(response) {
-  const payload = response?.data;
-  const errors = payload?.errors;
-  const message =
-    errors?.non_field || payload?.msg || payload?.message || "Request failed";
-  const error = new Error(message);
-  error.response = response;
-  return error;
-}
-
-const api = axios.create({
-  baseURL: BASE_URL,
-  headers: { "Content-Type": "application/json" },
-});
-
-// Attach JWT token to every request
-api.interceptors.request.use((config) => {
-  const token = getStoredAccessToken();
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
-
-// The backend wraps application status in the JSON body while returning HTTP 200.
-api.interceptors.response.use(
-  (res) => {
-    const appStatus = getAppStatus(res);
-    if (appStatus >= 400) {
-      if (shouldClearAuth(appStatus, res.data?.code)) {
-        clearAuthSession();
-        redirectToLogin();
-      }
-      return Promise.reject(buildAppError(res));
+  const handleVote = (dir) => {
+    if (!token) {
+      navigate("/login");
+      return;
     }
-    return res;
-  },
-  (err) => {
-    if (shouldClearAuth(err.response?.status, err.response?.data?.code)) {
-      clearAuthSession();
-      redirectToLogin();
-    }
-    return Promise.reject(err);
-  },
-);
+    vote(postId, dir);
+  };
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
-export const authAPI = {
-  login: (username, password) =>
-    api.post("/users/login", { username, password }),
-  register: (username, password) =>
-    api.post("/users/register", { username, password }),
-};
+  if (loading && !currentPost) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-4">
+        <Skeleton className="h-8 w-24" />
+        <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
+          <Card className="shadow-none">
+            <div className="p-6 space-y-4">
+              <div className="flex gap-3">
+                <Skeleton className="size-10 rounded-full" />
+                <Skeleton className="h-4 w-48" />
+              </div>
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
-// ─── Spaces (Communities) ────────────────────────────────────────────────────
-export const spacesAPI = {
-  getAll: (page = 1, sort_by = "") =>
-    api.get("/spaces", { params: { page, sort_by } }),
-  getById: (spaceId) => api.get(`/spaces/${spaceId}`),
-  getSubscriptions: () => api.get("/spaces/subscriptions"),
-  create: (title, description, username) =>
-    api.post("/spaces", { title, description, username }),
-  update: (spaceId, title, description) =>
-    api.put(`/spaces/${spaceId}`, { title, description }),
-  delete: (spaceId) => api.delete(`/spaces/${spaceId}`),
-  subscribe: (spaceId) => api.post(`/spaces/${spaceId}/subscribe`),
-  unsubscribe: (spaceId) => api.post(`/spaces/${spaceId}/unsubscribe`),
-};
+  if (error) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-4">
+        <Button variant="ghost" size="sm" asChild>
+          <Link to="/">
+            <ArrowLeft className="size-4" /> Back
+          </Link>
+        </Button>
+        <p className="text-sm text-destructive">{error}</p>
+      </div>
+    );
+  }
 
-// ─── Posts ───────────────────────────────────────────────────────────────────
-export const postsAPI = {
-  getAll: (page = 1, sort_by = "") =>
-    api.get("/posts", { params: { page, sort_by } }),
-  getById: (postId) => api.get(`/posts/${postId}`),
-  create: (subId, title, content) =>
-    api.post(`/spaces/${subId}/posts`, { title, content }),
-  update: (postId, title, content) =>
-    api.put(`/posts/${postId}`, { title, content }),
-  delete: (postId) => api.delete(`/posts/${postId}`),
-  upvote: (postId) => api.post(`/posts/${postId}/upvote`),
-  downvote: (postId) => api.post(`/posts/${postId}/downvote`),
-  deleteVote: (postId) => api.delete(`/posts/${postId}/votes`),
-};
+  if (!currentPost) return null;
 
-// ─── Comments ────────────────────────────────────────────────────────────────
-export const commentsAPI = {
-  // Backend returns flat list; parent_id=0 means top-level
-  getAll: (postId, page = 1, sortBy = "") =>
-    api.get(`/posts/${postId}/comments`, {
-      params: { page, order_by: sortBy },
-    }),
-  getById: (commentId) => api.get(`/comments/${commentId}`),
-  create: (postId, content, parent_id = 0) =>
-    api.post(`/posts/${postId}/comments`, { content, parent_id }),
-  update: (commentId, content) =>
-    api.put(`/comments/${commentId}`, { content }),
-  delete: (commentId) => api.delete(`/comments/${commentId}`),
-  upvote: (commentId) => api.post(`/comments/${commentId}/upvote`),
-  downvote: (commentId) => api.post(`/comments/${commentId}/downvote`),
-  deleteVote: (commentId) => api.delete(`/comments/${commentId}/votes`),
-};
+  const userVote = currentPost.userVote ?? 0;
+  const community = currentPost.community || "general";
+  const author = currentPost.author ?? "u/unknown";
+  const score = currentPost.score ?? 0;
+  const tags = currentPost.tags ?? [];
+  const createdAt = currentPost.createdAt;
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+  return (
+    <div className="mx-auto w-full max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+      <Button variant="ghost" size="sm" asChild className="-mb-2">
+        <Link to="/">
+          <ArrowLeft className="size-4" /> Back to Feed
+        </Link>
+      </Button>
 
-/** Build a nested tree from a flat comment list using parent_id */
-export function getResponseData(payload, fallback = null) {
-  return payload?.data ?? fallback;
+      {/* Fixed sidebar width (320px), fluid main column */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        {/* Main Content Column */}
+        <div className="min-w-0 space-y-6">
+          {/* Post Card */}
+          <Card className="shadow-none overflow-hidden w-full">
+            <div className="p-5 sm:p-6">
+              {/* Meta */}
+              ...
+              {/* Title */}
+              <h1 className="mt-3 text-xl sm:text-2xl font-bold leading-tight text-card-foreground break-words">
+                {currentPost.title}
+              </h1>
+              {/* Tags */}
+              {tags.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {tags.map((tag) => (
+                    <Badge key={tag} variant="secondary">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {/* Body (Markdown) */}
+              {currentPost.content && (
+                <div className="mt-4">
+                  <MarkdownRenderer content={currentPost.content} />
+                </div>
+              )}
+              <Separator className="my-5" />
+              {/* Actions */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center rounded-lg bg-muted p-0.5">
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label="Upvote"
+                    onClick={() => handleVote(1)}
+                    className={cn(userVote === 1 && "text-primary")}
+                  >
+                    <ArrowUp className="size-4" />
+                  </Button>
+                  <span
+                    className={cn(
+                      "min-w-8 px-1 text-center text-sm font-semibold tabular-nums",
+                      userVote === 1 && "text-primary",
+                      userVote === -1 && "text-destructive",
+                    )}
+                  >
+                    {score}
+                  </span>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label="Downvote"
+                    onClick={() => handleVote(-1)}
+                    className={cn(userVote === -1 && "text-destructive")}
+                  >
+                    <ArrowDown className="size-4" />
+                  </Button>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="px-2 text-muted-foreground"
+                >
+                  <Share2 className="size-4 me-1.5" /> Share
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="px-2 text-muted-foreground"
+                >
+                  <Bookmark className="size-4 me-1.5" /> Save
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          {/* Comments Section Card */}
+          <Card className="shadow-none">
+            <div className="p-5 sm:p-6">
+              <CommentThread postId={String(currentPost.id)} />
+            </div>
+          </Card>
+        </div>
+
+        {/* Right Sidebar (Desktop Only) */}
+        <aside className="hidden lg:block space-y-4">
+          <Card className="shadow-none sticky top-20">
+            <div className="p-4 space-y-4">
+              <div className="flex items-center gap-3">
+                <Avatar className="size-10">
+                  <AvatarFallback>
+                    {community.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-bold text-foreground">v/{community}</p>
+                  <p className="text-xs text-muted-foreground">Community</p>
+                </div>
+              </div>
+              <Separator />
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <p className="text-lg font-bold text-foreground">1.2k</p>
+                  <p className="text-xs text-muted-foreground">Members</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-foreground">45</p>
+                  <p className="text-xs text-muted-foreground">Online</p>
+                </div>
+              </div>
+              <Separator />
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Calendar className="size-4" />
+                <span>Created Jan 1, 2024</span>
+              </div>
+              <Button className="w-full" variant="outline">
+                Join Community
+              </Button>
+            </div>
+          </Card>
+        </aside>
+      </div>
+    </div>
+  );
 }
-
-export {
-  buildCommentTree,
-  normalisePost,
-  normaliseComment,
-  formatRelativeDate,
-} from "@/lib/normalise";
-
-export default api;
 </file>
 
 <file path="src/store/commentStore.js">
@@ -5936,6 +6390,436 @@ function findById(list, id) {
 }
 </file>
 
+<file path="src/store/spacesStore.js">
+import { create } from "zustand";
+import { getResponseData, spacesAPI } from "../services/api";
+import { getErrorMessage } from "@/lib/error";
+
+function slugify(input) {
+  if (!input) return "";
+  return input
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .substring(0, 50);
+}
+
+function normaliseSpace(space) {
+  return {
+    ...space,
+    id: space.ID,
+    username: space.Username,
+    title: space.Title,
+    description: space.Description,
+    subscribersCount: space.SubscribersCount,
+    views: space.Views,
+  };
+}
+
+export const useSpacesStore = create((set, get) => ({
+  spaces: [],
+  subscribedSpaces: [],
+  loading: false,
+  subscriptionsLoading: false,
+  error: null,
+  subscriptionsError: null,
+  page: 1,
+  hasMore: true,
+  subscribeLoading: false,
+
+  fetchSpaces: async (page = 1, sort_by = "") => {
+    set({ loading: true, error: null });
+    try {
+      const { data } = await spacesAPI.getAll(page, sort_by);
+      const incoming = getResponseData(data, []).map(normaliseSpace);
+      set({
+        spaces: page === 1 ? incoming : [...get().spaces, ...incoming],
+        loading: false,
+        page,
+        hasMore: incoming.length > 0,
+      });
+    } catch (err) {
+      set({
+        loading: false,
+        error: getErrorMessage(err, "Failed to load spaces"),
+      });
+    }
+  },
+
+  fetchSubscriptions: async () => {
+    set({ subscriptionsLoading: true, subscriptionsError: null });
+    try {
+      const { data } = await spacesAPI.getSubscriptions();
+      const incoming = getResponseData(data, []).map(normaliseSpace);
+      set({ subscribedSpaces: incoming, subscriptionsLoading: false });
+    } catch (err) {
+      set({
+        subscriptionsLoading: false,
+        subscriptionsError: getErrorMessage(
+          err,
+          "Failed to load subscriptions",
+        ),
+      });
+    }
+  },
+
+  subscribeToSpace: async (spaceId) => {
+    set({ subscribeLoading: true, error: null });
+    try {
+      await spacesAPI.subscribe(spaceId);
+      await get().fetchSubscriptions();
+      await get().fetchSpaces(1);
+      set({ subscribeLoading: false });
+      return { success: true };
+    } catch (err) {
+      const msg = getErrorMessage(err, "Failed to subscribe to space");
+      set({ subscribeLoading: false, error: msg });
+      return { success: false, error: msg };
+    }
+  },
+
+  createSpace: async (title, description) => {
+    set({ createLoading: true, createError: null });
+    try {
+      const username = slugify(title);
+      await spacesAPI.create(title, description, username);
+      await get().fetchSpaces(1);
+      set({ createLoading: false });
+      return { success: true };
+    } catch (err) {
+      const msg = getErrorMessage(err, "Failed to create space");
+      set({ createLoading: false, createError: msg });
+      return { success: false, error: msg };
+    }
+  },
+}));
+
+export default useSpacesStore;
+</file>
+
+<file path="src/features/feed/components/feed-post-card.jsx">
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { usePostsStore } from "@/store/postsStore";
+import { useAuthStore } from "@/store/authStore";
+import {
+  ArrowDown,
+  ArrowUp,
+  Bookmark,
+  MessageCircle,
+  MoreHorizontal,
+  Share2,
+} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+
+export function FeedPostCard({ post }) {
+  const { vote } = usePostsStore();
+  const { token } = useAuthStore();
+  const navigate = useNavigate();
+
+  const userVote = post.userVote ?? 0;
+
+  const handleVote = (dir) => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    vote(post.id, dir);
+  };
+
+  const community = post.community || "general";
+
+  return (
+    <Card className="shadow-none transition-colors hover:border-ring/40">
+      <article className="p-3 sm:p-4">
+        <div className="flex min-w-0 items-start gap-3">
+          <Avatar size="sm" className="mt-0.5">
+            <AvatarFallback>
+              {(post.community ?? "??").slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="truncate font-medium text-foreground">
+                v/{community}
+              </span>
+              <span>by {post.author}</span>
+              {post.createdAt && <span>{post.createdAt}</span>}
+            </div>
+            <h2 className="mt-1 text-base font-semibold leading-6 text-card-foreground sm:text-lg break-words">
+              <Link to={`/post/${post.id}`} className="hover:underline">
+                {post.title}
+              </Link>
+            </h2>
+          </div>
+          <Button size="icon-sm" variant="ghost" aria-label="More post options">
+            <MoreHorizontal className="size-4" />
+          </Button>
+        </div>
+
+        {post.description && (
+          <div className="mt-3 relative max-h-24 overflow-hidden">
+            <MarkdownRenderer content={post.description} />
+            {/* Fade out gradient at the bottom */}
+            <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+          </div>
+        )}
+
+        {post.tags?.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {post.tags.map((tag) => (
+              <Badge key={tag} variant="default">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
+
+        <Separator className="my-3" />
+
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center rounded-lg bg-muted p-0.5">
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              aria-label="Upvote"
+              onClick={() => handleVote(1)}
+              className={cn(userVote === 1 && "text-primary")}
+            >
+              <ArrowUp className="size-4" />
+            </Button>
+            <span
+              className={cn(
+                "min-w-8 px-1 text-center text-xs font-semibold tabular-nums",
+                userVote === 1 && "text-primary",
+                userVote === -1 && "text-destructive",
+              )}
+            >
+              {post.votes ?? 0}
+            </span>
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              aria-label="Downvote"
+              onClick={() => handleVote(-1)}
+              className={cn(userVote === -1 && "text-destructive")}
+            >
+              <ArrowDown className="size-4" />
+            </Button>
+          </div>
+
+          <div className="flex min-w-0 items-center gap-1">
+            <Button size="sm" variant="ghost" className="px-2" asChild>
+              <Link to={`/post/${post.id}`}>
+                <MessageCircle className="size-4" />
+                <span className="hidden min-[420px]:inline">
+                  {post.comments ?? ""}
+                </span>
+              </Link>
+            </Button>
+            <Button size="sm" variant="ghost" className="px-2">
+              <Share2 className="size-4" />
+              <span className="hidden sm:inline">Share</span>
+            </Button>
+            <Button size="icon-sm" variant="ghost" aria-label="Save post">
+              <Bookmark className="size-4" />
+            </Button>
+          </div>
+        </div>
+      </article>
+    </Card>
+  );
+}
+</file>
+
+<file path="src/services/api.js">
+import axios from "axios";
+
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api/v1";
+const ACCESS_TOKEN_KEY = "access_token";
+const REFRESH_TOKEN_KEY = "refresh_token";
+const ACCESS_TOKEN_EXPIRES_AT_KEY = "access_token_expires_at";
+const USER_KEY = "user";
+
+export function getStoredAccessToken() {
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
+}
+
+export function storeAuthSession({
+  accessToken,
+  refreshToken,
+  expiresAt,
+  user,
+}) {
+  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+
+  if (refreshToken) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  } else {
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  }
+
+  if (expiresAt) {
+    localStorage.setItem(ACCESS_TOKEN_EXPIRES_AT_KEY, String(expiresAt));
+  } else {
+    localStorage.removeItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
+  }
+
+  if (user) {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  } else {
+    localStorage.removeItem(USER_KEY);
+  }
+}
+
+export function clearAuthSession() {
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
+  localStorage.removeItem(USER_KEY);
+}
+
+function shouldClearAuth(status, code) {
+  return status === 401 || code === "invalid_token";
+}
+
+function redirectToLogin() {
+  if (window.location.pathname !== "/login") {
+    window.location.href = "/login";
+  }
+}
+
+function getAppStatus(response) {
+  const status = response?.data?.status;
+  return typeof status === "number" ? status : 0;
+}
+
+function buildAppError(response) {
+  const payload = response?.data;
+  const errors = payload?.errors;
+  const message =
+    errors?.non_field || payload?.msg || payload?.message || "Request failed";
+  const error = new Error(message);
+  error.response = response;
+  return error;
+}
+
+const api = axios.create({
+  baseURL: BASE_URL,
+  headers: { "Content-Type": "application/json" },
+});
+
+// Attach JWT token to every request
+api.interceptors.request.use((config) => {
+  const token = getStoredAccessToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+// The backend wraps application status in the JSON body while returning HTTP 200.
+api.interceptors.response.use(
+  (res) => {
+    const appStatus = getAppStatus(res);
+    if (appStatus >= 400) {
+      if (shouldClearAuth(appStatus, res.data?.code)) {
+        clearAuthSession();
+        redirectToLogin();
+      }
+      return Promise.reject(buildAppError(res));
+    }
+    return res;
+  },
+  (err) => {
+    if (shouldClearAuth(err.response?.status, err.response?.data?.code)) {
+      clearAuthSession();
+      redirectToLogin();
+    }
+    return Promise.reject(err);
+  },
+);
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+export const authAPI = {
+  login: (username, password) =>
+    api.post("/users/login", { username, password }),
+  register: (username, password) =>
+    api.post("/users/register", { username, password }),
+};
+
+// ─── Spaces (Communities) ────────────────────────────────────────────────────
+export const spacesAPI = {
+  getAll: (page = 1, sort_by = "") =>
+    api.get("/spaces", { params: { page, sort_by } }),
+  getById: (spaceId) => api.get(`/spaces/${spaceId}`),
+  getSubscriptions: () => api.get("/spaces/subscriptions"),
+  create: (title, description, username) =>
+    api.post("/spaces", { title, description, username }),
+  update: (spaceId, title, description) =>
+    api.put(`/spaces/${spaceId}`, { title, description }),
+  delete: (spaceId) => api.delete(`/spaces/${spaceId}`),
+  subscribe: (spaceId) => api.post(`/spaces/${spaceId}/subscribe`),
+  unsubscribe: (spaceId) => api.post(`/spaces/${spaceId}/unsubscribe`),
+};
+
+// ─── Posts ───────────────────────────────────────────────────────────────────
+export const postsAPI = {
+  getAll: (page = 1, sort_by = "") =>
+    api.get("/posts", { params: { page, sort_by } }),
+  getHomePage: (page = 1, sort_by = "") =>
+    api.get("/posts/home", { params: { page, sort_by } }),
+  getById: (postId) => api.get(`/posts/${postId}`),
+  create: (subId, title, content) =>
+    api.post(`/spaces/${subId}/posts`, { title, content }),
+  update: (postId, title, content) =>
+    api.put(`/posts/${postId}`, { title, content }),
+  delete: (postId) => api.delete(`/posts/${postId}`),
+  upvote: (postId) => api.post(`/posts/${postId}/upvote`),
+  downvote: (postId) => api.post(`/posts/${postId}/downvote`),
+  deleteVote: (postId) => api.delete(`/posts/${postId}/votes`),
+};
+
+// ─── Comments ────────────────────────────────────────────────────────────────
+export const commentsAPI = {
+  // Backend returns flat list; parent_id=0 means top-level
+  getAll: (postId, page = 1, sortBy = "") =>
+    api.get(`/posts/${postId}/comments`, {
+      params: { page, order_by: sortBy },
+    }),
+  getById: (commentId) => api.get(`/comments/${commentId}`),
+  create: (postId, content, parent_id = 0) =>
+    api.post(`/posts/${postId}/comments`, { content, parent_id }),
+  update: (commentId, content) =>
+    api.put(`/comments/${commentId}`, { content }),
+  delete: (commentId) => api.delete(`/comments/${commentId}`),
+  upvote: (commentId) => api.post(`/comments/${commentId}/upvote`),
+  downvote: (commentId) => api.post(`/comments/${commentId}/downvote`),
+  deleteVote: (commentId) => api.delete(`/comments/${commentId}/votes`),
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Build a nested tree from a flat comment list using parent_id */
+export function getResponseData(payload, fallback = null) {
+  return payload?.data ?? fallback;
+}
+
+export {
+  buildCommentTree,
+  normalisePost,
+  normaliseComment,
+  formatRelativeDate,
+} from "@/lib/normalise";
+
+export default api;
+</file>
+
 <file path="package.json">
 {
   "name": "voteria",
@@ -5959,8 +6843,10 @@ function findById(list, id) {
     "radix-ui": "^1.4.3",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.14.1",
     "recharts": "3.8.0",
+    "remark-gfm": "^4.0.1",
     "shadcn": "^4.8.3",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
@@ -5980,165 +6866,6 @@ function findById(list, id) {
     "globals": "^17.5.0",
     "vite": "^8.0.9"
   }
-}
-</file>
-
-<file path="src/layouts/root/components/app-sidebar.jsx">
-import { useEffect, useState } from "react";
-import { NavMain } from "./nav-main";
-import { NavProjects } from "./nav-projects";
-import { sidebarData } from "@/lib/voteria-data";
-import { useAuthStore } from "@/store/authStore";
-import { useSpacesStore } from "@/store/spacesStore";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Sheet,
-  SheetTrigger,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-} from "@/components/ui/sheet";
-import { Plus, FolderIcon } from "lucide-react";
-import { Sidebar, SidebarContent, SidebarRail } from "@/components/ui/sidebar";
-
-function mapSpaceToProject(space) {
-  return {
-    name: `v/${space.title}`,
-    url: "/",
-    icon: FolderIcon,
-    id: space.id,
-  };
-}
-
-export function AppSidebar(props) {
-  const token = useAuthStore((state) => state.token);
-  const {
-    subscribedSpaces,
-    loading: spacesLoading,
-    subscriptionsLoading,
-    error: spacesError,
-    subscriptionsError,
-    fetchSubscriptions,
-    createSpace,
-    createLoading,
-    createError,
-  } = useSpacesStore();
-
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [formError, setFormError] = useState(null);
-
-  useEffect(() => {
-    if (!token) return;
-    fetchSubscriptions();
-  }, [token, fetchSubscriptions]);
-
-  useEffect(() => {
-    if (spacesError || subscriptionsError) {
-      setFormError(spacesError || subscriptionsError);
-    }
-  }, [spacesError, subscriptionsError]);
-
-  useEffect(() => {
-    if (createError) {
-      setFormError(createError);
-    }
-  }, [createError]);
-
-  const projects =
-    subscribedSpaces.length > 0
-      ? subscribedSpaces.map(mapSpaceToProject)
-      : null;
-
-  const handleCreateSpace = async () => {
-    if (!title.trim() || !description.trim()) {
-      setFormError("Title and description are required.");
-      return;
-    }
-
-    setFormError(null);
-    const result = await createSpace(title.trim(), description.trim());
-
-    if (result.success) {
-      setTitle("");
-      setDescription("");
-      setSheetOpen(false);
-    } else {
-      setFormError(result.error ?? "Failed to create space.");
-    }
-  };
-
-  return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarContent>
-        <div className="px-4 py-3">
-          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-            <SheetTrigger asChild>
-              <Button size="sm" className="w-full justify-center" icon={Plus}>
-                Create Space
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="max-w-sm">
-              <SheetHeader>
-                <SheetTitle>Create a new space</SheetTitle>
-                <SheetDescription>
-                  Give your space a title and a short description.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="space-y-4 px-4">
-                <div>
-                  <label className="text-sm font-medium text-foreground">
-                    Title
-                  </label>
-                  <Input
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    placeholder="Space title"
-                    className="mt-2"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-foreground">
-                    Description
-                  </label>
-                  <Textarea
-                    value={description}
-                    onChange={(event) => setDescription(event.target.value)}
-                    placeholder="Short description"
-                    className="mt-2 min-h-24"
-                  />
-                </div>
-                {formError && (
-                  <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                    {formError}
-                  </p>
-                )}
-              </div>
-              <SheetFooter className="px-4 pb-4 pt-2">
-                <Button
-                  size="sm"
-                  className="w-full"
-                  onClick={handleCreateSpace}
-                  disabled={createLoading}
-                >
-                  {createLoading ? "Creating…" : "Create space"}
-                </Button>
-              </SheetFooter>
-            </SheetContent>
-          </Sheet>
-        </div>
-
-        <NavMain items={sidebarData.navMain} />
-        <NavProjects projects={projects} />
-      </SidebarContent>
-      <SidebarRail />
-    </Sidebar>
-  );
 }
 </file>
 
@@ -6315,6 +7042,162 @@ export function FeedComposer({ sortBy = "" }) {
 }
 </file>
 
+<file path="src/layouts/root/components/app-sidebar.jsx">
+import { useEffect, useState } from "react";
+import { NavMain } from "./nav-main";
+import { NavProjects } from "./nav-projects";
+import { sidebarData } from "@/lib/voteria-data";
+import { useAuthStore } from "@/store/authStore";
+import { useSpacesStore } from "@/store/spacesStore";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
+import { Plus, FolderIcon } from "lucide-react";
+import { Sidebar, SidebarContent, SidebarRail } from "@/components/ui/sidebar";
+
+function mapSpaceToProject(space) {
+  return {
+    name: `v/${space.title}`,
+    url: "/",
+    icon: FolderIcon,
+    id: space.id,
+  };
+}
+
+export function AppSidebar(props) {
+  const token = useAuthStore((state) => state.token);
+  const {
+    subscribedSpaces,
+    loading: spacesLoading,
+    subscriptionsLoading,
+    error: spacesError,
+    subscriptionsError,
+    fetchSubscriptions,
+    createSpace,
+    createLoading,
+    createError,
+  } = useSpacesStore();
+
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [formError, setFormError] = useState(null);
+
+  useEffect(() => {
+    if (!token) return;
+    fetchSubscriptions();
+  }, [token, fetchSubscriptions]);
+
+  useEffect(() => {
+    if (spacesError || subscriptionsError) {
+      setFormError(spacesError || subscriptionsError);
+    }
+  }, [spacesError, subscriptionsError]);
+
+  useEffect(() => {
+    if (createError) {
+      setFormError(createError);
+    }
+  }, [createError]);
+
+  const projects = subscribedSpaces.map(mapSpaceToProject);
+
+  const handleCreateSpace = async () => {
+    if (!title.trim() || !description.trim()) {
+      setFormError("Title and description are required.");
+      return;
+    }
+
+    setFormError(null);
+    const result = await createSpace(title.trim(), description.trim());
+
+    if (result.success) {
+      setTitle("");
+      setDescription("");
+      setSheetOpen(false);
+    } else {
+      setFormError(result.error ?? "Failed to create space.");
+    }
+  };
+
+  return (
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarContent>
+        <div className="px-4 py-3">
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+            <SheetTrigger asChild>
+              <Button size="sm" className="w-full justify-center" icon={Plus}>
+                Create Space
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="max-w-sm">
+              <SheetHeader>
+                <SheetTitle>Create a new space</SheetTitle>
+                <SheetDescription>
+                  Give your space a title and a short description.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="space-y-4 px-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground">
+                    Title
+                  </label>
+                  <Input
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    placeholder="Space title"
+                    className="mt-2"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground">
+                    Description
+                  </label>
+                  <Textarea
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    placeholder="Short description"
+                    className="mt-2 min-h-24"
+                  />
+                </div>
+                {formError && (
+                  <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                    {formError}
+                  </p>
+                )}
+              </div>
+              <SheetFooter className="px-4 pb-4 pt-2">
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={handleCreateSpace}
+                  disabled={createLoading}
+                >
+                  {createLoading ? "Creating…" : "Create space"}
+                </Button>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        <NavMain items={sidebarData.navMain} />
+        <NavProjects projects={projects} />
+      </SidebarContent>
+      <SidebarRail />
+    </Sidebar>
+  );
+}
+</file>
+
 <file path="src/layouts/RootLayout.jsx">
 import { AppSidebar } from "@/layouts/root/components/app-sidebar";
 import { SiteHeader } from "@/layouts/root/components/site-header";
@@ -6366,16 +7249,16 @@ const SORT_MAP = {
 
 export default function HomePage() {
   const [activeFilter, setActiveFilter] = useState("Best");
-  const { posts, loading, error, fetchPosts, hasMore, page } = usePostsStore();
+  const { posts, loading, error, fetchHome, hasMore, page } = usePostsStore();
   const sortBy = SORT_MAP[activeFilter];
 
   useEffect(() => {
-    fetchPosts(1, sortBy);
-  }, [fetchPosts, sortBy]);
+    fetchHome(1, sortBy);
+  }, [fetchHome, sortBy]);
 
   const handleLoadMore = () => {
     if (!loading && hasMore) {
-      fetchPosts(page + 1, sortBy);
+      fetchHome(page + 1, sortBy);
     }
   };
 
