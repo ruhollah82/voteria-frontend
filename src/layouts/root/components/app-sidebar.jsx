@@ -64,10 +64,7 @@ export function AppSidebar(props) {
     }
   }, [createError]);
 
-  const projects =
-    subscribedSpaces.length > 0
-      ? subscribedSpaces.map(mapSpaceToProject)
-      : null;
+  const projects = subscribedSpaces.map(mapSpaceToProject);
 
   const handleCreateSpace = async () => {
     if (!title.trim() || !description.trim()) {

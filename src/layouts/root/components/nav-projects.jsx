@@ -24,7 +24,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 
-export function NavProjects({ projects }) {
+export function NavProjects({ projects = [] }) {
   const { isMobile } = useSidebar();
   const { pathname } = useLocation();
 

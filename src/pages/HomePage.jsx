@@ -17,16 +17,16 @@ const SORT_MAP = {
 
 export default function HomePage() {
   const [activeFilter, setActiveFilter] = useState("Best");
-  const { posts, loading, error, fetchPosts, hasMore, page } = usePostsStore();
+  const { posts, loading, error, fetchHome, hasMore, page } = usePostsStore();
   const sortBy = SORT_MAP[activeFilter];
 
   useEffect(() => {
-    fetchPosts(1, sortBy);
-  }, [fetchPosts, sortBy]);
+    fetchHome(1, sortBy);
+  }, [fetchHome, sortBy]);
 
   const handleLoadMore = () => {
     if (!loading && hasMore) {
-      fetchPosts(page + 1, sortBy);
+      fetchHome(page + 1, sortBy);
     }
   };
 

@@ -21,6 +21,7 @@ import { CommentVoter } from "./CommentVoter";
 import { ReplyComposer } from "./ReplyComposer";
 import { useAuthStore } from "@/store/authStore";
 import { useCommentStore } from "@/store/commentStore";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 const MAX_DEPTH = 6;
 

@@ -1,0 +1,22 @@
+# Components
+
+- **ThemeProvider** — `src\app\providers\ThemeProvider.jsx`
+- **CommentItem** — props: comment, postId, depth — `src\features\comments\components\CommentItem.jsx`
+- **CommentThread** — props: postId — `src\features\comments\components\CommentThread.jsx`
+- **CommentVoter** — props: postId, commentId, votes, userVote — `src\features\comments\components\CommentVoter.jsx`
+- **ReplyComposer** — props: postId, parentId, onClose — `src\features\comments\components\ReplyComposer.jsx`
+- **CommunityStrip** — `src\features\feed\components\community-strip.jsx`
+- **FeedComposer** — props: sortBy — `src\features\feed\components\feed-composer.jsx`
+- **FeedFilters** — props: activeFilter, onFilterChange — `src\features\feed\components\feed-filters.jsx`
+- **FeedPostCard** — props: post — `src\features\feed\components\feed-post-card.jsx`
+- **FeedRightRail** — `src\features\feed\components\feed-right-rail.jsx`
+- **AppSidebar** — `src\layouts\root\components\app-sidebar.jsx`
+- **NavMain** — props: items — `src\layouts\root\components\nav-main.jsx`
+- **NavProjects** [client] — props: projects — `src\layouts\root\components\nav-projects.jsx`
+- **SiteHeader** — `src\layouts\root\components\site-header.jsx`
+- **RootLayout** — `src\layouts\RootLayout.jsx`
+- **AboutPage** — `src\pages\AboutPage.jsx`
+- **AuthPage** — `src\pages\AuthPage.jsx`
+- **HomePage** — `src\pages\HomePage.jsx`
+- **NotFoundPage** — `src\pages\NotFoundPage.jsx`
+- **PostPage** — `src\pages\PostPage.jsx`

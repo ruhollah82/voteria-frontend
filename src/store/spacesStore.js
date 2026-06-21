@@ -16,12 +16,12 @@ function slugify(input) {
 function normaliseSpace(space) {
   return {
     ...space,
-    id: space.id,
-    username: space.username,
-    title: space.username ?? "کیر",
-    description: space.description ?? "",
-    subscribersCount: space.subscribersCount ?? 0,
-    views: space.views ?? 0,
+    id: space.ID,
+    username: space.Username,
+    title: space.Title,
+    description: space.Description,
+    subscribersCount: space.SubscribersCount,
+    views: space.Views,
   };
 }
 

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 export function FeedPostCard({ post }) {
   const { vote } = usePostsStore();
@@ -50,7 +51,7 @@ export function FeedPostCard({ post }) {
               <span>by {post.author}</span>
               {post.createdAt && <span>{post.createdAt}</span>}
             </div>
-            <h2 className="mt-1 text-base font-semibold leading-6 text-card-foreground sm:text-lg">
+            <h2 className="mt-1 text-base font-semibold leading-6 text-card-foreground sm:text-lg break-words">
               <Link to={`/post/${post.id}`} className="hover:underline">
                 {post.title}
               </Link>
@@ -62,9 +63,11 @@ export function FeedPostCard({ post }) {
         </div>
 
         {post.description && (
-          <p className="mt-3 text-sm leading-6 text-muted-foreground line-clamp-3">
-            {post.description}
-          </p>
+          <div className="mt-3 relative max-h-24 overflow-hidden">
+            <MarkdownRenderer content={post.description} />
+            {/* Fade out gradient at the bottom */}
+            <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+          </div>
         )}
 
         {post.tags?.length > 0 && (

@@ -6,16 +6,7 @@ import {
   MessageSquare,
   PlusCircle,
   TrendingUp,
-  Users,
   Zap,
-  Code2,
-  Palette,
-  Globe,
-  Cpu,
-  Shield,
-  Gamepad2,
-  Camera,
-  Music,
 } from "lucide-react";
 
 export const sidebarData = {
@@ -24,16 +15,6 @@ export const sidebarData = {
       title: "Home",
       url: "/",
       icon: Home,
-    },
-    {
-      title: "Popular",
-      url: "/popular",
-      icon: Flame,
-    },
-    {
-      title: "Trending",
-      url: "/trending",
-      icon: TrendingUp,
     },
   ],
   projects: [

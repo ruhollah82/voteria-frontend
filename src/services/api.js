@@ -130,6 +130,8 @@ export const spacesAPI = {
 export const postsAPI = {
   getAll: (page = 1, sort_by = "") =>
     api.get("/posts", { params: { page, sort_by } }),
+  getHomePage: (page = 1, sort_by = "") =>
+    api.get("/posts/home", { params: { page, sort_by } }),
   getById: (postId) => api.get(`/posts/${postId}`),
   create: (subId, title, content) =>
     api.post(`/spaces/${subId}/posts`, { title, content }),
