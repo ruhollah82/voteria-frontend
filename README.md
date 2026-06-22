@@ -140,6 +140,13 @@ Voteria uses a custom theme configuration built on top of Tailwind CSS 4 and sha
 - **Typography**: Inter (Variable), IBM Plex Sans/Mono.
 - **Customization**: Theme tokens live in `src/index.css`. Prefer global theme tokens over hard-coded colors.
 
+## 🔗 Related Repositories
+
+This is the **Frontend** repository for the Voteria project.
+You can find the corresponding **Backend** repository here:
+
+👉 **[Voteria Backend](https://github.com/yaghoubi-mn/voteria-backend)**
+
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome!
