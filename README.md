@@ -92,7 +92,7 @@ src/
 
 - [Node.js](https://nodejs.org/) (v18 or higher recommended)
 - [Bun](https://bun.sh/) (or npm/yarn/pnpm)
-- A running backend API
+- **[Voteria Backend](https://github.com/yaghoubi-mn/voteria-backend)**
 
 ### Installation
 
