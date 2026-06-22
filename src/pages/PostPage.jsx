@@ -22,7 +22,6 @@ import {
   Bookmark,
   Share2,
   ArrowLeft,
-  Calendar,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -33,6 +32,7 @@ import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 import { useAuthStore } from "@/store/authStore";
 import { usePostsStore } from "@/store/postsStore";
 import { cn } from "@/lib/utils";
+import { useSpacesStore } from "@/store/spacesStore";
 
 export default function PostPage() {
   const { postId } = useParams();
@@ -40,6 +40,8 @@ export default function PostPage() {
   const { currentPost, loading, error, fetchPost, vote, editPost, deletePost } =
     usePostsStore();
   const navigate = useNavigate();
+
+  const { currentSpace, fetchSpace } = useSpacesStore();
 
   // Edit Modal State
   const [isEditing, setIsEditing] = useState(false);
@@ -51,6 +53,12 @@ export default function PostPage() {
   useEffect(() => {
     fetchPost(postId);
   }, [fetchPost, postId]);
+
+  useEffect(() => {
+    if (currentPost && (currentPost.space_id || currentPost.spaceId)) {
+      fetchSpace(currentPost.space_id || currentPost.spaceId);
+    }
+  }, [currentPost, fetchSpace]);
 
   const handleVote = (dir) => {
     if (!user) {
@@ -97,14 +105,13 @@ export default function PostPage() {
 
     const result = await deletePost(currentPost.id);
     if (result.success) {
-      navigate("/"); // Redirect to home feed after deletion
+      navigate("/");
     } else {
       alert(result.error || "Failed to delete post.");
     }
   };
 
   if (loading && !currentPost) {
-    // ... existing skeleton loading code ...
     return (
       <div className="mx-auto max-w-5xl space-y-4">
         <Skeleton className="h-8 w-24" />
@@ -126,7 +133,6 @@ export default function PostPage() {
   }
 
   if (error) {
-    // ... existing error code ...
     return (
       <div className="mx-auto max-w-5xl space-y-4">
         <Button variant="ghost" size="sm" asChild>
@@ -161,17 +167,24 @@ export default function PostPage() {
           <Card className="shadow-none overflow-hidden w-full">
             <div className="p-5 sm:p-6">
               {/* Meta */}
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <Avatar size="sm">
                   <AvatarFallback>
                     {community.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="font-medium text-foreground">
+                {/* Clickable Community Name */}
+                <Link
+                  to={`/space/${currentPost.space_id || currentPost.spaceId}`}
+                  className="font-medium text-foreground hover:underline"
+                >
                   v/{community}
-                </span>
+                </Link>
                 <span>•</span>
                 <span>Posted by {currentPost.author}</span>
+                <span>•</span>
+                {/* Relative Date (e.g., "1m ago", "1d ago") */}
+                <span>{currentPost.createdAt}</span>
               </div>
 
               {/* Title */}
@@ -293,41 +306,75 @@ export default function PostPage() {
 
         {/* Right Sidebar (Desktop Only) */}
         <aside className="hidden lg:block space-y-4">
-          {/* ... existing sidebar code ... */}
-          <Card className="shadow-none sticky top-20">
-            <div className="p-4 space-y-4">
-              <div className="flex items-center gap-3">
-                <Avatar className="size-10">
-                  <AvatarFallback>
-                    {community.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-bold text-foreground">v/{community}</p>
-                  <p className="text-xs text-muted-foreground">Community</p>
+          {currentSpace ? (
+            <Card className="shadow-none sticky top-20 overflow-hidden">
+              {/* Header Banner */}
+              <div className="h-20 bg-gradient-to-br from-primary/20 via-secondary/10 to-background relative">
+                <div className="absolute -bottom-6 left-4">
+                  <Avatar className="size-12 border-4 border-card bg-muted">
+                    <AvatarFallback className="text-lg font-bold text-foreground">
+                      {currentSpace.title?.slice(0, 2).toUpperCase() || "V"}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
               </div>
-              <Separator />
-              <div className="grid grid-cols-2 gap-4 text-center">
+
+              <div className="p-4 pt-8 space-y-4">
                 <div>
-                  <p className="text-lg font-bold text-foreground">1.2k</p>
-                  <p className="text-xs text-muted-foreground">Members</p>
+                  {/* Clickable Space Title */}
+                  <Link
+                    to={`/space/${currentSpace.id}`}
+                    className="hover:underline"
+                  >
+                    <h3 className="font-bold text-lg text-foreground leading-tight">
+                      v/{currentSpace.title}
+                    </h3>
+                  </Link>
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-3">
+                    {currentSpace.description || "No description available."}
+                  </p>
                 </div>
-                <div>
-                  <p className="text-lg font-bold text-foreground">45</p>
-                  <p className="text-xs text-muted-foreground">Online</p>
+
+                <Separator />
+
+                {/* Stats Grid (Members, Views, Posts) */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1 text-center">
+                    <p className="text-lg font-bold text-foreground">
+                      {currentSpace.subscribersCount?.toLocaleString() || "0"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Members</p>
+                  </div>
+                  <div className="space-y-1 text-center">
+                    <p className="text-lg font-bold text-foreground">
+                      {currentSpace.views?.toLocaleString() || "0"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Views</p>
+                  </div>
                 </div>
+
+                <Separator />
+
+                {/* View Space Button */}
+                <Button className="w-full" variant="outline" asChild>
+                  <Link to={`/space/${currentSpace.id}`}>View Space</Link>
+                </Button>
               </div>
-              <Separator />
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Calendar className="size-4" />
-                <span>Created Jan 1, 2024</span>
+            </Card>
+          ) : (
+            // Loading Skeleton
+            <Card className="shadow-none sticky top-20 p-4">
+              <Skeleton className="h-20 w-full mb-4" />
+              <Skeleton className="h-4 w-3/4 mb-2" />
+              <Skeleton className="h-3 w-full mb-4" />
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
               </div>
-              <Button className="w-full" variant="outline">
-                Join Community
-              </Button>
-            </div>
-          </Card>
+              <Skeleton className="h-9 w-full" />
+            </Card>
+          )}
         </aside>
       </div>
 

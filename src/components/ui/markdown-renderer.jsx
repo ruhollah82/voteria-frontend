@@ -36,11 +36,11 @@ function CodeBlock({ node, inline, className, children, ...props }) {
     }
   };
 
-  // ✅ Fix 1: Reduced padding for inline code
-  if (inline) {
+  // ✅ Inline code - small, inline with text
+  if (inline || !match) {
     return (
       <code
-        className="font-mono text-[0.85em] rounded bg-muted px-1 py-0.5 break-words"
+        className="inline font-mono text-[0.85em] rounded bg-muted/80 dark:bg-muted/60 px-1.5 py-0.5 border border-border/50 text-foreground break-words"
         {...props}
       >
         {children}
@@ -48,6 +48,7 @@ function CodeBlock({ node, inline, className, children, ...props }) {
     );
   }
 
+  // ✅ Block code - full width with syntax highlighting
   return (
     <div className="relative group/code my-3">
       {match && (

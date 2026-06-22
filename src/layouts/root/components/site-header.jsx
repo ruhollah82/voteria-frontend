@@ -26,6 +26,7 @@ import {
   LogIn,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { SearchBar } from "./search-bar";
 
 const pageTitles = {
   "/": "Home",
@@ -72,13 +73,8 @@ export function SiteHeader() {
           </Link>
         </div>
 
-        <div className="relative mx-auto hidden w-full max-w-xl sm:block">
-          <Search className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            aria-label="Search Voteria"
-            className="h-9 bg-muted/60 ps-8"
-            placeholder="Search Voteria"
-          />
+        <div className="mx-auto hidden w-full max-w-xl sm:block">
+          <SearchBar />
         </div>
 
         <div className="flex items-center justify-end gap-1.5">

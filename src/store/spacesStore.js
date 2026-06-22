@@ -35,6 +35,7 @@ export const useSpacesStore = create((set, get) => ({
   page: 1,
   hasMore: true,
   subscribeLoading: false,
+  currentSpace: null, // ✅ Add this
 
   fetchSpaces: async (page = 1, sort_by = "") => {
     set({ loading: true, error: null });
@@ -52,6 +53,21 @@ export const useSpacesStore = create((set, get) => ({
         loading: false,
         error: getErrorMessage(err, "Failed to load spaces"),
       });
+    }
+  },
+  fetchSpace: async (spaceId) => {
+    set({ loading: true, error: null });
+    try {
+      const { data } = await spacesAPI.getById(spaceId);
+      const space = normaliseSpace(getResponseData(data, null));
+      set({ currentSpace: space, loading: false });
+      return space;
+    } catch (err) {
+      set({
+        loading: false,
+        error: getErrorMessage(err, "Failed to load space"),
+      });
+      return null;
     }
   },
 
@@ -101,12 +117,39 @@ export const useSpacesStore = create((set, get) => ({
     }
   },
 
-  createSpace: async (title, description) => {
+  // src/store/spacesStore.js
+
+  createSpace: async (title, description, username) => {
     set({ createLoading: true, createError: null });
     try {
-      const username = slugify(title);
-      await spacesAPI.create(title, description, username);
-      await get().fetchSpaces(1);
+      // Use provided username or fallback to slugified title
+      const finalUsername = username || slugify(title);
+
+      // 1. Create the space
+      const { data } = await spacesAPI.create(
+        title,
+        description,
+        finalUsername,
+      );
+
+      // Extract the ID from the response (handles various backend shapes)
+      const payload = data?.data ?? data;
+      const newSpaceId =
+        payload?.ID ?? payload?.id ?? payload?.data?.ID ?? payload?.data?.id;
+
+      // 2. Automatically subscribe to the newly created space
+      if (newSpaceId) {
+        try {
+          await spacesAPI.subscribe(newSpaceId);
+        } catch (subErr) {
+          // If subscription fails, we log it but don't block the creation success
+          console.warn("Space created, but auto-subscription failed:", subErr);
+        }
+      }
+
+      // 3. Refresh both spaces and subscriptions so the UI updates immediately
+      await Promise.all([get().fetchSpaces(1), get().fetchSubscriptions()]);
+
       set({ createLoading: false });
       return { success: true };
     } catch (err) {

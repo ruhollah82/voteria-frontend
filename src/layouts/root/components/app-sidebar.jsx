@@ -48,6 +48,7 @@ export function AppSidebar(props) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [formError, setFormError] = useState(null);
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
     if (!token) return;
@@ -56,13 +57,35 @@ export function AppSidebar(props) {
 
   const projects = subscribedSpaces.map(mapSpaceToProject);
 
+  const handleTitleChange = (e) => {
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    if (!username) {
+      setUsername(
+        newTitle
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "")
+          .substring(0, 30),
+      );
+    }
+  };
+
   const handleCreateSpace = async () => {
     if (!title.trim() || !description.trim()) {
       setFormError("Title and description are required.");
       return;
     }
+    if (!username.trim()) {
+      setFormError("Space username is required.");
+      return;
+    }
     setFormError(null);
-    const result = await createSpace(title.trim(), description.trim());
+    const result = await createSpace(
+      title.trim(),
+      description.trim(),
+      username.trim(),
+    );
+
     if (result.success) {
       resetAndClose();
     } else {
@@ -73,6 +96,7 @@ export function AppSidebar(props) {
   const resetAndClose = () => {
     setModalOpen(false);
     setTitle("");
+    setUsername("");
     setDescription("");
     setFormError(null);
   };
@@ -101,7 +125,6 @@ export function AppSidebar(props) {
         </SidebarContent>
         <SidebarRail />
       </Sidebar>
-
       {/* Create Space Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -110,7 +133,6 @@ export function AppSidebar(props) {
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {/* Updated modal header icon and background to match */}
                   <div className="flex size-8 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
                     <Orbit className="size-4" />
                   </div>
@@ -122,7 +144,6 @@ export function AppSidebar(props) {
                   <X className="size-4" />
                 </Button>
               </div>
-
               <p className="text-sm text-muted-foreground">
                 Give your community a name and a short description so people
                 know what it's about.
@@ -130,17 +151,48 @@ export function AppSidebar(props) {
 
               {/* Fields */}
               <div className="space-y-3">
+                {/* Title */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-foreground">
                     Title
                   </label>
                   <Input
                     value={title}
-                    onChange={(event) => setTitle(event.target.value)}
+                    onChange={handleTitleChange}
                     placeholder="e.g. Web Development, Gaming, etc."
                     maxLength={50}
                   />
                 </div>
+
+                {/* ✅ Space Username */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-foreground">
+                    Space Username
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-muted-foreground select-none">
+                      v/
+                    </span>
+                    <Input
+                      value={username}
+                      onChange={(event) => {
+                        // ✅ Strictly enforce: lowercase, no spaces, no special characters
+                        const val = event.target.value
+                          .toLowerCase()
+                          .replace(/[^a-z0-9]/g, "");
+                        setUsername(val.substring(0, 30));
+                      }}
+                      placeholder="e.g. webdev, gaming"
+                      maxLength={30}
+                      className="flex-1"
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Only letters and numbers. No spaces or special characters.
+                  </p>
+                </div>
+
+                {/* Description */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-foreground">
                     Description
@@ -170,7 +222,10 @@ export function AppSidebar(props) {
                   size="sm"
                   onClick={handleCreateSpace}
                   disabled={
-                    createLoading || !title.trim() || !description.trim()
+                    createLoading ||
+                    !title.trim() ||
+                    !username.trim() ||
+                    !description.trim()
                   }
                 >
                   {createLoading ? "Creating…" : "Create space"}
