@@ -327,7 +327,15 @@ export default function PostPage() {
                     className="hover:underline"
                   >
                     <h3 className="font-bold text-lg text-foreground leading-tight">
-                      v/{currentSpace.title}
+                      {currentSpace.title}
+                    </h3>
+                  </Link>
+                  <Link
+                    to={`/space/${currentSpace.id}`}
+                    className="hover:underline"
+                  >
+                    <h3 className="text-sm text-foreground leading-tight">
+                      v/{currentSpace.username}
                     </h3>
                   </Link>
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-3">

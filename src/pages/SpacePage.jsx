@@ -113,10 +113,10 @@ export default function SpacePage() {
                 </Avatar>
                 <div className="flex-1 pb-1">
                   <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-tight">
-                    v/{space.title}
+                    {space.title}
                   </h1>
                   <p className="text-sm text-muted-foreground">
-                    u/{space.username}
+                    v/{space.username}
                   </p>
                 </div>
               </div>
@@ -246,7 +246,7 @@ export default function SpacePage() {
             No posts yet
           </h3>
           <p className="text-sm text-muted-foreground">
-            Be the first to post in v/{space?.title}!
+            Be the first to post in v/{space?.username}!
           </p>
         </Card>
       )}

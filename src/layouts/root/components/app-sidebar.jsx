@@ -27,7 +27,7 @@ import {
 
 function mapSpaceToProject(space) {
   return {
-    name: `v/${space.title}`,
+    name: space.title,
     url: `/space/${space.id}`,
     icon: Orbit,
     id: space.id,

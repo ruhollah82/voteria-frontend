@@ -108,10 +108,10 @@ export function SearchBar() {
                   >
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-foreground truncate">
-                        v/{space.title}
+                        {space.title}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
-                        u/{space.username}
+                        v/{space.username}
                       </p>
                     </div>
                     <span className="text-xs text-muted-foreground ms-2 shrink-0">

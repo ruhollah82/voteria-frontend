@@ -34,9 +34,11 @@ export default function AuthPage() {
 
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground shadow-lg shadow-primary/20">
-              V
-            </div>
+            <img
+              src="/Voteria.png"
+              alt="Voteria"
+              className="size-8 shrink-0 rounded-lg object-cover"
+            />
             <span className="text-2xl font-bold tracking-tight">Voteria</span>
           </div>
         </div>
