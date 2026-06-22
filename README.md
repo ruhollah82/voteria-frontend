@@ -46,6 +46,46 @@ src/
 └── store/              # Zustand global state (auth, posts, comments, spaces)
 ```
 
+## 📸 Screenshots
+
+### 🏠 Home
+
+<p align="center">
+  <img src="screenshots/home-light.png" alt="Home Light Mode" width="45%" />
+  <img src="screenshots/home-dark.png" alt="Home Dark Mode" width="45%" />
+</p>
+
+### 🔐 Authentication
+
+<p align="center">
+  <img src="screenshots/register-light.png" alt="Register Light Mode" width="45%" />
+  <img src="screenshots/register-dark.png" alt="Register Dark Mode" width="45%" />
+</p>
+
+### 📝 Posts & Comments
+
+<p align="center">
+  <img src="screenshots/post-light.png" alt="Post Light Mode" width="45%" />
+  <img src="screenshots/post-dark.png" alt="Post Dark Mode" width="45%" />
+</p>
+<p align="center">
+  <img src="screenshots/post-comments.png" alt="Post Comments" width="60%" />
+</p>
+
+### ✍️ Create Post
+
+<p align="center">
+  <img src="screenshots/create-post-editor.png" alt="Post Editor" width="45%" />
+  <img src="screenshots/create-post-preview.png" alt="Post Preview" width="45%" />
+</p>
+
+### 🌌 Spaces
+
+<p align="center">
+  <img src="screenshots/space-page.png" alt="Space Page" width="45%" />
+  <img src="screenshots/create-space.png" alt="Create Space" width="45%" />
+</p>
+
 ## 🚀 Getting Started
 
 ### Prerequisites

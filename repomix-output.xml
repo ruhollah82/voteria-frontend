@@ -55,6 +55,18 @@ package.json
 public/favicon.svg
 public/Voteria.png
 README.md
+screenshots/create-post-editor.png
+screenshots/create-post-preview.png
+screenshots/create-post.png
+screenshots/create-space.png
+screenshots/home-dark.png
+screenshots/home-light.png
+screenshots/post-comments.png
+screenshots/post-dark.png
+screenshots/post-light.png
+screenshots/register-dark.png
+screenshots/register-light.png
+screenshots/space-page.png
 seed.mjs
 src/app/providers/ThemeProvider.jsx
 src/app/router.jsx
@@ -2941,169 +2953,6 @@ export function NavMain({ items }) {
 }
 </file>
 
-<file path="src/layouts/root/components/search-bar.jsx">
-// src/layouts/root/components/search-bar.jsx
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Input } from "@/components/ui/input";
-import { useSpacesStore } from "@/store/spacesStore";
-import { usePostsStore } from "@/store/postsStore";
-import { Search } from "lucide-react";
-
-export function SearchBar() {
-  const [query, setQuery] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
-  const [results, setResults] = useState({ spaces: [], posts: [] });
-  const containerRef = useRef(null);
-
-  const { spaces, fetchSpaces } = useSpacesStore();
-  const { posts, fetchPosts } = usePostsStore();
-  const navigate = useNavigate();
-
-  // Fetch initial data when search is opened
-  useEffect(() => {
-    if (isOpen) {
-      if (spaces.length === 0) fetchSpaces(1);
-      if (posts.length === 0) fetchPosts(1);
-    }
-  }, [isOpen, spaces.length, posts.length, fetchSpaces, fetchPosts]);
-
-  // Filter data with debounce
-  useEffect(() => {
-    if (!query.trim()) {
-      setResults({ spaces: [], posts: [] });
-      return;
-    }
-    const timer = setTimeout(() => {
-      const q = query.toLowerCase();
-
-      const spaceResults = spaces
-        .filter(
-          (s) =>
-            s.title?.toLowerCase().includes(q) ||
-            s.username?.toLowerCase().includes(q),
-        )
-        .slice(0, 5);
-
-      const postResults = posts
-        .filter(
-          (p) =>
-            p.title?.toLowerCase().includes(q) ||
-            p.description?.toLowerCase().includes(q), // searches content but doesn't show it
-        )
-        .slice(0, 5);
-
-      setResults({ spaces: spaceResults, posts: postResults });
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [query, spaces, posts]);
-
-  // Close dropdown on click outside
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target)
-      ) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleSelect = (type, item) => {
-    setIsOpen(false);
-    setQuery("");
-    if (type === "space") navigate(`/space/${item.id}`);
-    if (type === "post") navigate(`/post/${item.id}`);
-  };
-
-  return (
-    <div className="relative w-full" ref={containerRef}>
-      <div className="relative">
-        <Search className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          aria-label="Search Voteria"
-          className="h-9 bg-muted/60 ps-8"
-          placeholder="Search Voteria"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => setIsOpen(true)}
-        />
-      </div>
-
-      {isOpen &&
-        (query.trim() ||
-          results.spaces.length > 0 ||
-          results.posts.length > 0) && (
-          <div className="absolute top-full mt-2 w-full rounded-lg border border-border bg-popover p-2 shadow-lg z-50 max-h-96 overflow-y-auto">
-            {results.spaces.length > 0 && (
-              <div className="mb-2">
-                <p className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase">
-                  Spaces
-                </p>
-                {results.spaces.map((space) => (
-                  <button
-                    key={space.id}
-                    className="w-full flex items-center justify-between rounded-md px-2 py-2 text-sm hover:bg-accent text-start"
-                    onClick={() => handleSelect("space", space)}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-foreground truncate">
-                        v/{space.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        u/{space.username}
-                      </p>
-                    </div>
-                    <span className="text-xs text-muted-foreground ms-2 shrink-0">
-                      {space.subscribersCount?.toLocaleString() || 0} members
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {results.posts.length > 0 && (
-              <div>
-                <p className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase">
-                  Posts
-                </p>
-                {results.posts.map((post) => (
-                  <button
-                    key={post.id}
-                    className="w-full flex items-center justify-between rounded-md px-2 py-2 text-sm hover:bg-accent text-start"
-                    onClick={() => handleSelect("post", post)}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-foreground truncate">
-                        {post.title}
-                      </p>
-                    </div>
-                    <span className="text-xs text-muted-foreground ms-2 shrink-0">
-                      {post.comments} comments
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {query.trim() &&
-              results.spaces.length === 0 &&
-              results.posts.length === 0 && (
-                <p className="px-2 py-4 text-center text-sm text-muted-foreground">
-                  No results found
-                </p>
-              )}
-          </div>
-        )}
-    </div>
-  );
-}
-</file>
-
 <file path="src/lib/error.js">
 export function getErrorMessage(err, fallback = "Error") {
   const response = err?.response?.data ?? err?.data ?? {};
@@ -3649,6 +3498,169 @@ export { FeedPostCard } from "./components/feed-post-card";
 export { FeedRightRail } from "./components/feed-right-rail";
 </file>
 
+<file path="src/layouts/root/components/search-bar.jsx">
+// src/layouts/root/components/search-bar.jsx
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { useSpacesStore } from "@/store/spacesStore";
+import { usePostsStore } from "@/store/postsStore";
+import { Search } from "lucide-react";
+
+export function SearchBar() {
+  const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [results, setResults] = useState({ spaces: [], posts: [] });
+  const containerRef = useRef(null);
+
+  const { spaces, fetchSpaces } = useSpacesStore();
+  const { posts, fetchPosts } = usePostsStore();
+  const navigate = useNavigate();
+
+  // Fetch initial data when search is opened
+  useEffect(() => {
+    if (isOpen) {
+      if (spaces.length === 0) fetchSpaces(1);
+      if (posts.length === 0) fetchPosts(1);
+    }
+  }, [isOpen, spaces.length, posts.length, fetchSpaces, fetchPosts]);
+
+  // Filter data with debounce
+  useEffect(() => {
+    if (!query.trim()) {
+      setResults({ spaces: [], posts: [] });
+      return;
+    }
+    const timer = setTimeout(() => {
+      const q = query.toLowerCase();
+
+      const spaceResults = spaces
+        .filter(
+          (s) =>
+            s.title?.toLowerCase().includes(q) ||
+            s.username?.toLowerCase().includes(q),
+        )
+        .slice(0, 5);
+
+      const postResults = posts
+        .filter(
+          (p) =>
+            p.title?.toLowerCase().includes(q) ||
+            p.description?.toLowerCase().includes(q), // searches content but doesn't show it
+        )
+        .slice(0, 5);
+
+      setResults({ spaces: spaceResults, posts: postResults });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query, spaces, posts]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelect = (type, item) => {
+    setIsOpen(false);
+    setQuery("");
+    if (type === "space") navigate(`/space/${item.id}`);
+    if (type === "post") navigate(`/post/${item.id}`);
+  };
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+      <div className="relative">
+        <Search className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          aria-label="Search Voteria"
+          className="h-9 bg-muted/60 ps-8"
+          placeholder="Search Voteria"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => setIsOpen(true)}
+        />
+      </div>
+
+      {isOpen &&
+        (query.trim() ||
+          results.spaces.length > 0 ||
+          results.posts.length > 0) && (
+          <div className="absolute top-full mt-2 w-full rounded-lg border border-border bg-popover p-2 shadow-lg z-50 max-h-96 overflow-y-auto">
+            {results.spaces.length > 0 && (
+              <div className="mb-2">
+                <p className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase">
+                  Spaces
+                </p>
+                {results.spaces.map((space) => (
+                  <button
+                    key={space.id}
+                    className="w-full flex items-center justify-between rounded-md px-2 py-2 text-sm hover:bg-accent text-start"
+                    onClick={() => handleSelect("space", space)}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-foreground truncate">
+                        {space.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        v/{space.username}
+                      </p>
+                    </div>
+                    <span className="text-xs text-muted-foreground ms-2 shrink-0">
+                      {space.subscribersCount?.toLocaleString() || 0} members
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {results.posts.length > 0 && (
+              <div>
+                <p className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase">
+                  Posts
+                </p>
+                {results.posts.map((post) => (
+                  <button
+                    key={post.id}
+                    className="w-full flex items-center justify-between rounded-md px-2 py-2 text-sm hover:bg-accent text-start"
+                    onClick={() => handleSelect("post", post)}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-foreground truncate">
+                        {post.title}
+                      </p>
+                    </div>
+                    <span className="text-xs text-muted-foreground ms-2 shrink-0">
+                      {post.comments} comments
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {query.trim() &&
+              results.spaces.length === 0 &&
+              results.posts.length === 0 && (
+                <p className="px-2 py-4 text-center text-sm text-muted-foreground">
+                  No results found
+                </p>
+              )}
+          </div>
+        )}
+    </div>
+  );
+}
+</file>
+
 <file path="src/main.jsx">
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -3725,264 +3737,6 @@ const AboutPage = () => {
 };
 
 export default AboutPage;
-</file>
-
-<file path="src/pages/SpacePage.jsx">
-// src/pages/SpacePage.jsx
-import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import {
-  ArrowLeft,
-  Users,
-  FileText,
-  MessageSquare,
-  Check,
-  Orbit,
-} from "lucide-react";
-import { FeedFilters, FeedPostCard } from "@/features/feed";
-import { usePostsStore } from "@/store/postsStore";
-import { useSpacesStore } from "@/store/spacesStore";
-import { useAuthStore } from "@/store/authStore";
-
-const SORT_MAP = {
-  Best: "",
-  Hot: "score",
-  Rising: "date",
-};
-
-export default function SpacePage() {
-  const { spaceId } = useParams();
-  const [activeFilter, setActiveFilter] = useState("Best");
-  const [isSubscribed, setIsSubscribed] = useState(false);
-  const [postsCount, setPostsCount] = useState(0);
-
-  const { posts, loading, error, fetchSpacePosts, hasMore, page } =
-    usePostsStore();
-  const { subscribedSpaces, spaces, subscribeToSpace, unsubscribeFromSpace } =
-    useSpacesStore();
-  const { token } = useAuthStore();
-  const navigate = useNavigate();
-
-  const sortBy = SORT_MAP[activeFilter];
-
-  // Find the space details from either subscribed or all spaces
-  const allSpaces = [...subscribedSpaces, ...spaces];
-  const space = allSpaces.find((s) => String(s.id) === String(spaceId));
-
-  // Check if user is subscribed
-  useEffect(() => {
-    if (space) {
-      const subscribed = subscribedSpaces.some(
-        (s) => String(s.id) === String(spaceId),
-      );
-      setIsSubscribed(subscribed);
-    }
-  }, [space, spaceId, subscribedSpaces]);
-
-  // Count total posts for this space
-  useEffect(() => {
-    if (posts.length > 0) {
-      setPostsCount(posts.length);
-    }
-  }, [posts]);
-
-  useEffect(() => {
-    fetchSpacePosts(spaceId, 1, sortBy);
-  }, [fetchSpacePosts, spaceId, sortBy]);
-
-  const handleJoin = async () => {
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
-    if (isSubscribed) {
-      await unsubscribeFromSpace(spaceId);
-      setIsSubscribed(false);
-    } else {
-      await subscribeToSpace(spaceId);
-      setIsSubscribed(true);
-    }
-  };
-
-  const handleLoadMore = () => {
-    if (!loading && hasMore) {
-      fetchSpacePosts(spaceId, page + 1, sortBy);
-    }
-  };
-
-  return (
-    <div className="mx-auto w-full max-w-5xl space-y-4">
-      <Button variant="ghost" size="sm" asChild className="-mb-2">
-        <Link to="/">
-          <ArrowLeft className="size-4" /> Back to Feed
-        </Link>
-      </Button>
-
-      {/* Space Header Card */}
-      {space ? (
-        <Card className="overflow-hidden shadow-none">
-          {/* Banner */}
-          <div className="h-24 sm:h-32 bg-gradient-to-br from-primary/20 via-secondary/10 to-background relative">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
-          </div>
-
-          <div className="px-4 sm:px-6 pb-6">
-            <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-8 sm:-mt-12 mb-4">
-              {/* Avatar & Title */}
-              <div className="flex items-end gap-4">
-                <Avatar className="size-16 sm:size-20 border-4 border-card bg-muted shadow-md">
-                  <AvatarFallback className="text-xl sm:text-2xl font-bold text-foreground bg-gradient-to-br from-primary/20 to-secondary/20">
-                    {space.title?.slice(0, 2).toUpperCase() || "V"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 pb-1">
-                  <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-tight">
-                    v/{space.title}
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    u/{space.username}
-                  </p>
-                </div>
-              </div>
-
-              {/* Join Button */}
-              <Button
-                onClick={handleJoin}
-                disabled={!token}
-                variant={isSubscribed ? "secondary" : "default"}
-                size="lg"
-                className="sm:w-auto w-full"
-              >
-                {isSubscribed ? (
-                  <>
-                    <Check className="size-4 mr-2" />
-                    Joined
-                  </>
-                ) : (
-                  <>
-                    <Orbit className="size-4 mr-2" />
-                    Join Community
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {/* Description */}
-            {space.description && (
-              <p className="text-sm sm:text-base text-foreground mb-4 max-w-3xl">
-                {space.description}
-              </p>
-            )}
-
-            <Separator className="my-4" />
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 sm:gap-8">
-              <div className="flex items-center gap-2">
-                <Users className="size-5 text-muted-foreground" />
-                <div>
-                  <p className="text-lg sm:text-xl font-bold text-foreground">
-                    {space.subscribersCount?.toLocaleString() || "0"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Members</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <FileText className="size-5 text-muted-foreground" />
-                <div>
-                  <p className="text-lg sm:text-xl font-bold text-foreground">
-                    {postsCount > 0 ? postsCount.toLocaleString() : "0"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Posts</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <MessageSquare className="size-5 text-muted-foreground" />
-                <div>
-                  <p className="text-lg sm:text-xl font-bold text-foreground">
-                    {space.views?.toLocaleString() || "0"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Views</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-      ) : (
-        <Card className="p-6 shadow-none">
-          <Skeleton className="h-24 w-full mb-4" />
-          <div className="flex items-end gap-4 -mt-8 mb-4">
-            <Skeleton className="size-16 rounded-full" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-          </div>
-          <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-2/3" />
-        </Card>
-      )}
-
-      <FeedFilters
-        activeFilter={activeFilter}
-        onFilterChange={setActiveFilter}
-      />
-
-      {/* Posts List */}
-      <div className="space-y-3">
-        {loading && posts.length === 0
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="rounded-lg border border-border bg-card p-4 space-y-3"
-              >
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-3 w-full" />
-                <Skeleton className="h-3 w-2/3" />
-              </div>
-            ))
-          : posts.map((post) => <FeedPostCard key={post.id} post={post} />)}
-      </div>
-
-      {error && (
-        <p className="text-center text-sm text-destructive py-4">{error}</p>
-      )}
-
-      {hasMore && !loading && posts.length > 0 && (
-        <button
-          onClick={handleLoadMore}
-          className="w-full rounded-lg border border-border bg-card py-2.5 text-sm text-muted-foreground hover:bg-muted/50 transition-colors"
-        >
-          Load more
-        </button>
-      )}
-
-      {loading && posts.length > 0 && (
-        <p className="text-center text-sm text-muted-foreground py-2">
-          Loading…
-        </p>
-      )}
-
-      {!loading && posts.length === 0 && (
-        <Card className="p-8 text-center">
-          <FileText className="size-12 mx-auto text-muted-foreground mb-3" />
-          <h3 className="text-lg font-semibold text-foreground mb-1">
-            No posts yet
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Be the first to post in v/{space?.title}!
-          </p>
-        </Card>
-      )}
-    </div>
-  );
-}
 </file>
 
 <file path="index.html">
@@ -5097,123 +4851,259 @@ export function NavProjects({ projects = [] }) {
 }
 </file>
 
-<file path="src/pages/AuthPage.jsx">
+<file path="src/pages/SpacePage.jsx">
+// src/pages/SpacePage.jsx
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import {
+  ArrowLeft,
+  Users,
+  FileText,
+  MessageSquare,
+  Check,
+  Orbit,
+} from "lucide-react";
+import { FeedFilters, FeedPostCard } from "@/features/feed";
+import { usePostsStore } from "@/store/postsStore";
+import { useSpacesStore } from "@/store/spacesStore";
 import { useAuthStore } from "@/store/authStore";
-import { cn } from "@/lib/utils";
 
-export default function AuthPage() {
-  const [mode, setMode] = useState("login"); // "login" | "register"
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const { login, register, loading, error, token, clearError } = useAuthStore();
+const SORT_MAP = {
+  Best: "",
+  Hot: "score",
+  Rising: "date",
+};
+
+export default function SpacePage() {
+  const { spaceId } = useParams();
+  const [activeFilter, setActiveFilter] = useState("Best");
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [postsCount, setPostsCount] = useState(0);
+
+  const { posts, loading, error, fetchSpacePosts, hasMore, page } =
+    usePostsStore();
+  const { subscribedSpaces, spaces, subscribeToSpace, unsubscribeFromSpace } =
+    useSpacesStore();
+  const { token } = useAuthStore();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (token) navigate("/");
-  }, [navigate, token]);
+  const sortBy = SORT_MAP[activeFilter];
 
-  const handleSubmit = async (event) => {
-    event?.preventDefault();
-    if (!username.trim() || !password.trim()) return;
-    const fn = mode === "login" ? login : register;
-    const result = await fn(username.trim(), password);
-    if (result.success) navigate("/");
+  // Find the space details from either subscribed or all spaces
+  const allSpaces = [...subscribedSpaces, ...spaces];
+  const space = allSpaces.find((s) => String(s.id) === String(spaceId));
+
+  // Check if user is subscribed
+  useEffect(() => {
+    if (space) {
+      const subscribed = subscribedSpaces.some(
+        (s) => String(s.id) === String(spaceId),
+      );
+      setIsSubscribed(subscribed);
+    }
+  }, [space, spaceId, subscribedSpaces]);
+
+  // Count total posts for this space
+  useEffect(() => {
+    if (posts.length > 0) {
+      setPostsCount(posts.length);
+    }
+  }, [posts]);
+
+  useEffect(() => {
+    fetchSpacePosts(spaceId, 1, sortBy);
+  }, [fetchSpacePosts, spaceId, sortBy]);
+
+  const handleJoin = async () => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    if (isSubscribed) {
+      await unsubscribeFromSpace(spaceId);
+      setIsSubscribed(false);
+    } else {
+      await subscribeToSpace(spaceId);
+      setIsSubscribed(true);
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (!loading && hasMore) {
+      fetchSpacePosts(spaceId, page + 1, sortBy);
+    }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
-      <Card className="w-full max-w-sm shadow-md">
-        <div className="p-6 space-y-5">
-          {/* Header */}
-          <div className="space-y-1">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-              V
-            </div>
-            <h1 className="text-xl font-semibold text-card-foreground">
-              {mode === "login" ? "Sign in to Voteria" : "Create an account"}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {mode === "login"
-                ? "Enter your credentials to continue."
-                : "Pick a username and password to get started."}
-            </p>
+    <div className="mx-auto w-full max-w-5xl space-y-4">
+      <Button variant="ghost" size="sm" asChild className="-mb-2">
+        <Link to="/">
+          <ArrowLeft className="size-4" /> Back to Feed
+        </Link>
+      </Button>
+
+      {/* Space Header Card */}
+      {space ? (
+        <Card className="overflow-hidden shadow-none">
+          {/* Banner */}
+          <div className="h-24 sm:h-32 bg-gradient-to-br from-primary/20 via-secondary/10 to-background relative">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
           </div>
 
-          {/* Tab switcher */}
-          <div className="flex rounded-lg bg-muted p-0.5">
-            {["login", "register"].map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => {
-                  clearError();
-                  setMode(m);
-                }}
-                className={cn(
-                  "flex-1 rounded-md py-1.5 text-sm font-medium transition-colors capitalize",
-                  mode === m
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
+          <div className="px-4 sm:px-6 pb-6">
+            <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-8 sm:-mt-12 mb-4">
+              {/* Avatar & Title */}
+              <div className="flex items-end gap-4">
+                <Avatar className="size-16 sm:size-20 border-4 border-card bg-muted shadow-md">
+                  <AvatarFallback className="text-xl sm:text-2xl font-bold text-foreground bg-gradient-to-br from-primary/20 to-secondary/20">
+                    {space.title?.slice(0, 2).toUpperCase() || "V"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 pb-1">
+                  <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-tight">
+                    {space.title}
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    v/{space.username}
+                  </p>
+                </div>
+              </div>
+
+              {/* Join Button */}
+              <Button
+                onClick={handleJoin}
+                disabled={!token}
+                variant={isSubscribed ? "secondary" : "default"}
+                size="lg"
+                className="sm:w-auto w-full"
               >
-                {m === "login" ? "Sign in" : "Sign up"}
-              </button>
-            ))}
-          </div>
-
-          {/* Form */}
-          <form className="space-y-3" onSubmit={handleSubmit}>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">
-                Username
-              </label>
-              <Input
-                placeholder="your_username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">
-                Password
-              </label>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete={
-                  mode === "login" ? "current-password" : "new-password"
-                }
-              />
+                {isSubscribed ? (
+                  <>
+                    <Check className="size-4 mr-2" />
+                    Joined
+                  </>
+                ) : (
+                  <>
+                    <Orbit className="size-4 mr-2" />
+                    Join Community
+                  </>
+                )}
+              </Button>
             </div>
 
-            {error && (
-              <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                {error}
+            {/* Description */}
+            {space.description && (
+              <p className="text-sm sm:text-base text-foreground mb-4 max-w-3xl">
+                {space.description}
               </p>
             )}
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading || !username.trim() || !password.trim()}
-            >
-              {loading
-                ? "Please wait…"
-                : mode === "login"
-                  ? "Sign in"
-                  : "Create account"}
-            </Button>
-          </form>
-        </div>
-      </Card>
+            <Separator className="my-4" />
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-4 sm:gap-8">
+              <div className="flex items-center gap-2">
+                <Users className="size-5 text-muted-foreground" />
+                <div>
+                  <p className="text-lg sm:text-xl font-bold text-foreground">
+                    {space.subscribersCount?.toLocaleString() || "0"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Members</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <FileText className="size-5 text-muted-foreground" />
+                <div>
+                  <p className="text-lg sm:text-xl font-bold text-foreground">
+                    {postsCount > 0 ? postsCount.toLocaleString() : "0"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Posts</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <MessageSquare className="size-5 text-muted-foreground" />
+                <div>
+                  <p className="text-lg sm:text-xl font-bold text-foreground">
+                    {space.views?.toLocaleString() || "0"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Views</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <Card className="p-6 shadow-none">
+          <Skeleton className="h-24 w-full mb-4" />
+          <div className="flex items-end gap-4 -mt-8 mb-4">
+            <Skeleton className="size-16 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-2/3" />
+        </Card>
+      )}
+
+      <FeedFilters
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+      />
+
+      {/* Posts List */}
+      <div className="space-y-3">
+        {loading && posts.length === 0
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-lg border border-border bg-card p-4 space-y-3"
+              >
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+            ))
+          : posts.map((post) => <FeedPostCard key={post.id} post={post} />)}
+      </div>
+
+      {error && (
+        <p className="text-center text-sm text-destructive py-4">{error}</p>
+      )}
+
+      {hasMore && !loading && posts.length > 0 && (
+        <button
+          onClick={handleLoadMore}
+          className="w-full rounded-lg border border-border bg-card py-2.5 text-sm text-muted-foreground hover:bg-muted/50 transition-colors"
+        >
+          Load more
+        </button>
+      )}
+
+      {loading && posts.length > 0 && (
+        <p className="text-center text-sm text-muted-foreground py-2">
+          Loading…
+        </p>
+      )}
+
+      {!loading && posts.length === 0 && (
+        <Card className="p-8 text-center">
+          <FileText className="size-12 mx-auto text-muted-foreground mb-3" />
+          <h3 className="text-lg font-semibold text-foreground mb-1">
+            No posts yet
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Be the first to post in v/{space?.username}!
+          </p>
+        </Card>
+      )}
     </div>
   );
 }
@@ -6048,6 +5938,294 @@ export const useAuthStore = create((set) => ({
     set({ token: null, user: null, expiresAt: null, error: null });
   },
 }));
+</file>
+
+<file path="src/pages/AuthPage.jsx">
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useAuthStore } from "@/store/authStore";
+import { User, Lock, ArrowRight, MessageSquare, ArrowUp } from "lucide-react";
+
+export default function AuthPage() {
+  const [mode, setMode] = useState("login"); // "login" | "register"
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const { login, register, loading, error, token, clearError } = useAuthStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (token) navigate("/");
+  }, [navigate, token]);
+
+  const handleSubmit = async (event) => {
+    event?.preventDefault();
+    if (!username.trim() || !password.trim()) return;
+    const fn = mode === "login" ? login : register;
+    const result = await fn(username.trim(), password);
+    if (result.success) navigate("/");
+  };
+
+  return (
+    <div className="flex min-h-screen bg-background">
+      {/* Left Panel - Branding & Visuals (Hidden on mobile) */}
+      <div className="hidden lg:flex lg:flex-1 flex-col justify-between p-12 relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-secondary/5 dark:from-primary/10 dark:via-background dark:to-secondary/10">
+        {/* Abstract background shapes */}
+        <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-primary/10 rounded-full blur-2xl animate-pulse" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-secondary/10 rounded-full blur-2xl animate-pulse" />
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-3">
+            <img
+              src="/Voteria.png"
+              alt="Voteria"
+              className="size-8 shrink-0 rounded-lg object-cover"
+            />
+            <span className="text-2xl font-bold tracking-tight">Voteria</span>
+          </div>
+        </div>
+
+        <div className="relative z-10 space-y-8">
+          <div className="space-y-4">
+            <h2 className="text-4xl font-bold tracking-tight leading-tight">
+              {mode === "login" ? "Welcome back!" : "Join the community."}
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-md">
+              {mode === "login"
+                ? "Sign in to continue your journey, upvote great content, and engage with amazing spaces."
+                : "Create your account to start sharing, voting, and connecting with communities that matter to you."}
+            </p>
+          </div>
+
+          {/* Dynamic Mock UI based on mode */}
+          {mode === "register" ? (
+            <div className="relative max-w-sm">
+              <div className="absolute -top-4 -left-4 w-full h-full bg-secondary/10 dark:bg-secondary/20 rounded-2xl blur-xl" />
+              <div className="relative bg-card/80 backdrop-blur-sm border border-border rounded-2xl p-5 shadow-xl space-y-4">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Trending Spaces
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                        WD
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">v/webdev</p>
+                        <p className="text-xs text-muted-foreground">
+                          12.4k members
+                        </p>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline" className="h-7 text-xs">
+                      Join
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="size-9 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary font-bold text-xs">
+                        GD
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">v/gamedev</p>
+                        <p className="text-xs text-muted-foreground">
+                          8.2k members
+                        </p>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline" className="h-7 text-xs">
+                      Join
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="relative max-w-sm">
+              <div className="absolute -top-4 -left-4 w-full h-full bg-primary/10 dark:bg-primary/20 rounded-2xl blur-xl" />
+              <div className="relative bg-card/80 backdrop-blur-sm border border-border rounded-2xl p-5 shadow-xl space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="size-9 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold text-xs">
+                    WD
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">v/webdev</p>
+                    <p className="text-xs text-muted-foreground">
+                      Posted by u/dev_master
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm font-medium leading-relaxed">
+                  Just migrated our massive monolith to Vite and Tailwind v4.
+                  Here's the before/after! 🚀
+                </p>
+                <div className="flex items-center gap-4 pt-2 border-t border-border/50">
+                  <div className="flex items-center gap-1 text-xs font-semibold text-primary">
+                    <ArrowUp className="size-3.5" /> 1.2k
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <MessageSquare className="size-3.5" /> 342 comments
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="relative z-10 text-xs text-muted-foreground">
+          © 2026 Voteria. Made with ❤️ by Ruhollah Naseri
+        </div>
+      </div>
+
+      {/* Right Panel - Form */}
+      <div className="flex flex-1 items-center justify-center p-6 sm:p-12 bg-background">
+        <div className="w-full max-w-md space-y-8">
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex justify-center mb-8">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground shadow-lg shadow-primary/20">
+                V
+              </div>
+              <span className="text-2xl font-bold tracking-tight">Voteria</span>
+            </div>
+          </div>
+
+          {/* Header */}
+          <div className="space-y-2 text-center lg:text-left">
+            <h1 className="text-3xl font-bold tracking-tight">
+              {mode === "login" ? "Sign in" : "Create account"}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {mode === "login"
+                ? "Enter your credentials to access your account."
+                : "Fill in the details below to get started."}
+            </p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <label
+                className="text-sm font-medium leading-none"
+                htmlFor="username"
+              >
+                Username
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  id="username"
+                  placeholder="your_username"
+                  className="pl-9 h-11"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label
+                  className="text-sm font-medium leading-none"
+                  htmlFor="password"
+                >
+                  Password
+                </label>
+                {mode === "login" && (
+                  <a href="#" className="text-xs text-primary hover:underline">
+                    Forgot password?
+                  </a>
+                )}
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  className="pl-9 h-11"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={
+                    mode === "login" ? "current-password" : "new-password"
+                  }
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive border border-destructive/20">
+                {error}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full h-11 text-base font-medium shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+              disabled={loading || !username.trim() || !password.trim()}
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  Please wait…
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  {mode === "login" ? "Sign in" : "Create account"}
+                  <ArrowRight className="size-4" />
+                </span>
+              )}
+            </Button>
+          </form>
+
+          {/* Divider & Switch */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                {mode === "login"
+                  ? "New to Voteria?"
+                  : "Already have an account?"}
+              </span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-11"
+            onClick={() => {
+              clearError();
+              setMode(mode === "login" ? "register" : "login");
+            }}
+          >
+            {mode === "login" ? "Create an account" : "Sign in instead"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 </file>
 
 <file path="src/store/commentStore.js">
@@ -7432,6 +7610,225 @@ body {
 }
 </file>
 
+<file path="src/store/spacesStore.js">
+import { create } from "zustand";
+import { getResponseData, spacesAPI } from "../services/api";
+import { getErrorMessage } from "@/lib/error";
+
+function slugify(input) {
+  if (!input) return "";
+  return input
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .substring(0, 50);
+}
+
+function normaliseSpace(space) {
+  return {
+    ...space,
+    id: space.ID,
+    username: space.Username,
+    title: space.Title,
+    description: space.Description,
+    subscribersCount: space.SubscribersCount,
+    views: space.Views,
+  };
+}
+
+export const useSpacesStore = create((set, get) => ({
+  spaces: [],
+  subscribedSpaces: [],
+  loading: false,
+  subscriptionsLoading: false,
+  error: null,
+  subscriptionsError: null,
+  page: 1,
+  hasMore: true,
+  subscribeLoading: false,
+  currentSpace: null, // ✅ Add this
+
+  fetchSpaces: async (page = 1, sort_by = "") => {
+    set({ loading: true, error: null });
+    try {
+      const { data } = await spacesAPI.getAll(page, sort_by);
+      const incoming = getResponseData(data, []).map(normaliseSpace);
+      set({
+        spaces: page === 1 ? incoming : [...get().spaces, ...incoming],
+        loading: false,
+        page,
+        hasMore: incoming.length > 0,
+      });
+    } catch (err) {
+      set({
+        loading: false,
+        error: getErrorMessage(err, "Failed to load spaces"),
+      });
+    }
+  },
+  fetchSpace: async (spaceId) => {
+    set({ loading: true, error: null });
+    try {
+      const { data } = await spacesAPI.getById(spaceId);
+      const space = normaliseSpace(getResponseData(data, null));
+      set({ currentSpace: space, loading: false });
+      return space;
+    } catch (err) {
+      set({
+        loading: false,
+        error: getErrorMessage(err, "Failed to load space"),
+      });
+      return null;
+    }
+  },
+
+  fetchSubscriptions: async () => {
+    set({ subscriptionsLoading: true, subscriptionsError: null });
+    try {
+      const { data } = await spacesAPI.getSubscriptions();
+      const incoming = getResponseData(data, []).map(normaliseSpace);
+      set({ subscribedSpaces: incoming, subscriptionsLoading: false });
+    } catch (err) {
+      set({
+        subscriptionsLoading: false,
+        subscriptionsError: getErrorMessage(
+          err,
+          "Failed to load subscriptions",
+        ),
+      });
+    }
+  },
+
+  subscribeToSpace: async (spaceId) => {
+    set({ subscribeLoading: true, error: null });
+    try {
+      await spacesAPI.subscribe(spaceId);
+      await get().fetchSubscriptions();
+      await get().fetchSpaces(1);
+      set({ subscribeLoading: false });
+      return { success: true };
+    } catch (err) {
+      const msg = getErrorMessage(err, "Failed to subscribe to space");
+      set({ subscribeLoading: false, error: msg });
+      return { success: false, error: msg };
+    }
+  },
+  unsubscribeFromSpace: async (spaceId) => {
+    set({ subscribeLoading: true, error: null });
+    try {
+      await spacesAPI.unsubscribe(spaceId);
+      await get().fetchSubscriptions();
+      await get().fetchSpaces(1);
+      set({ subscribeLoading: false });
+      return { success: true };
+    } catch (err) {
+      const msg = getErrorMessage(err, "Failed to unsubscribe from space");
+      set({ subscribeLoading: false, error: msg });
+      return { success: false, error: msg };
+    }
+  },
+
+  // src/store/spacesStore.js
+
+  createSpace: async (title, description, username) => {
+    set({ createLoading: true, createError: null });
+    try {
+      // Use provided username or fallback to slugified title
+      const finalUsername = username || slugify(title);
+
+      // 1. Create the space
+      const { data } = await spacesAPI.create(
+        title,
+        description,
+        finalUsername,
+      );
+
+      // Extract the ID from the response (handles various backend shapes)
+      const payload = data?.data ?? data;
+      const newSpaceId =
+        payload?.ID ?? payload?.id ?? payload?.data?.ID ?? payload?.data?.id;
+
+      // 2. Automatically subscribe to the newly created space
+      if (newSpaceId) {
+        try {
+          await spacesAPI.subscribe(newSpaceId);
+        } catch (subErr) {
+          // If subscription fails, we log it but don't block the creation success
+          console.warn("Space created, but auto-subscription failed:", subErr);
+        }
+      }
+
+      // 3. Refresh both spaces and subscriptions so the UI updates immediately
+      await Promise.all([get().fetchSpaces(1), get().fetchSubscriptions()]);
+
+      set({ createLoading: false });
+      return { success: true };
+    } catch (err) {
+      const msg = getErrorMessage(err, "Failed to create space");
+      set({ createLoading: false, createError: msg });
+      return { success: false, error: msg };
+    }
+  },
+}));
+
+export default useSpacesStore;
+</file>
+
+<file path="package.json">
+{
+  "name": "voteria",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.2.8",
+    "@tailwindcss/vite": "^4.2.3",
+    "axios": "^1.17.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.17.0",
+    "next-themes": "^0.4.6",
+    "radix-ui": "^1.4.3",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.14.1",
+    "recharts": "3.8.0",
+    "rehype-highlight": "^7.0.2",
+    "rehype-katex": "^7.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "shadcn": "^4.8.3",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.2.3",
+    "tw-animate-css": "^1.4.0",
+    "vaul": "^1.1.2",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@tailwindcss/typography": "^0.5.20",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.5.0",
+    "vite": "^8.0.9"
+  }
+}
+</file>
+
 <file path="src/pages/PostPage.jsx">
 // src/pages/PostPage.jsx
 
@@ -7762,7 +8159,15 @@ export default function PostPage() {
                     className="hover:underline"
                   >
                     <h3 className="font-bold text-lg text-foreground leading-tight">
-                      v/{currentSpace.title}
+                      {currentSpace.title}
+                    </h3>
+                  </Link>
+                  <Link
+                    to={`/space/${currentSpace.id}`}
+                    className="hover:underline"
+                  >
+                    <h3 className="text-sm text-foreground leading-tight">
+                      v/{currentSpace.username}
                     </h3>
                   </Link>
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-3">
@@ -7876,225 +8281,6 @@ export default function PostPage() {
       )}
     </div>
   );
-}
-</file>
-
-<file path="src/store/spacesStore.js">
-import { create } from "zustand";
-import { getResponseData, spacesAPI } from "../services/api";
-import { getErrorMessage } from "@/lib/error";
-
-function slugify(input) {
-  if (!input) return "";
-  return input
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .substring(0, 50);
-}
-
-function normaliseSpace(space) {
-  return {
-    ...space,
-    id: space.ID,
-    username: space.Username,
-    title: space.Title,
-    description: space.Description,
-    subscribersCount: space.SubscribersCount,
-    views: space.Views,
-  };
-}
-
-export const useSpacesStore = create((set, get) => ({
-  spaces: [],
-  subscribedSpaces: [],
-  loading: false,
-  subscriptionsLoading: false,
-  error: null,
-  subscriptionsError: null,
-  page: 1,
-  hasMore: true,
-  subscribeLoading: false,
-  currentSpace: null, // ✅ Add this
-
-  fetchSpaces: async (page = 1, sort_by = "") => {
-    set({ loading: true, error: null });
-    try {
-      const { data } = await spacesAPI.getAll(page, sort_by);
-      const incoming = getResponseData(data, []).map(normaliseSpace);
-      set({
-        spaces: page === 1 ? incoming : [...get().spaces, ...incoming],
-        loading: false,
-        page,
-        hasMore: incoming.length > 0,
-      });
-    } catch (err) {
-      set({
-        loading: false,
-        error: getErrorMessage(err, "Failed to load spaces"),
-      });
-    }
-  },
-  fetchSpace: async (spaceId) => {
-    set({ loading: true, error: null });
-    try {
-      const { data } = await spacesAPI.getById(spaceId);
-      const space = normaliseSpace(getResponseData(data, null));
-      set({ currentSpace: space, loading: false });
-      return space;
-    } catch (err) {
-      set({
-        loading: false,
-        error: getErrorMessage(err, "Failed to load space"),
-      });
-      return null;
-    }
-  },
-
-  fetchSubscriptions: async () => {
-    set({ subscriptionsLoading: true, subscriptionsError: null });
-    try {
-      const { data } = await spacesAPI.getSubscriptions();
-      const incoming = getResponseData(data, []).map(normaliseSpace);
-      set({ subscribedSpaces: incoming, subscriptionsLoading: false });
-    } catch (err) {
-      set({
-        subscriptionsLoading: false,
-        subscriptionsError: getErrorMessage(
-          err,
-          "Failed to load subscriptions",
-        ),
-      });
-    }
-  },
-
-  subscribeToSpace: async (spaceId) => {
-    set({ subscribeLoading: true, error: null });
-    try {
-      await spacesAPI.subscribe(spaceId);
-      await get().fetchSubscriptions();
-      await get().fetchSpaces(1);
-      set({ subscribeLoading: false });
-      return { success: true };
-    } catch (err) {
-      const msg = getErrorMessage(err, "Failed to subscribe to space");
-      set({ subscribeLoading: false, error: msg });
-      return { success: false, error: msg };
-    }
-  },
-  unsubscribeFromSpace: async (spaceId) => {
-    set({ subscribeLoading: true, error: null });
-    try {
-      await spacesAPI.unsubscribe(spaceId);
-      await get().fetchSubscriptions();
-      await get().fetchSpaces(1);
-      set({ subscribeLoading: false });
-      return { success: true };
-    } catch (err) {
-      const msg = getErrorMessage(err, "Failed to unsubscribe from space");
-      set({ subscribeLoading: false, error: msg });
-      return { success: false, error: msg };
-    }
-  },
-
-  // src/store/spacesStore.js
-
-  createSpace: async (title, description, username) => {
-    set({ createLoading: true, createError: null });
-    try {
-      // Use provided username or fallback to slugified title
-      const finalUsername = username || slugify(title);
-
-      // 1. Create the space
-      const { data } = await spacesAPI.create(
-        title,
-        description,
-        finalUsername,
-      );
-
-      // Extract the ID from the response (handles various backend shapes)
-      const payload = data?.data ?? data;
-      const newSpaceId =
-        payload?.ID ?? payload?.id ?? payload?.data?.ID ?? payload?.data?.id;
-
-      // 2. Automatically subscribe to the newly created space
-      if (newSpaceId) {
-        try {
-          await spacesAPI.subscribe(newSpaceId);
-        } catch (subErr) {
-          // If subscription fails, we log it but don't block the creation success
-          console.warn("Space created, but auto-subscription failed:", subErr);
-        }
-      }
-
-      // 3. Refresh both spaces and subscriptions so the UI updates immediately
-      await Promise.all([get().fetchSpaces(1), get().fetchSubscriptions()]);
-
-      set({ createLoading: false });
-      return { success: true };
-    } catch (err) {
-      const msg = getErrorMessage(err, "Failed to create space");
-      set({ createLoading: false, createError: msg });
-      return { success: false, error: msg };
-    }
-  },
-}));
-
-export default useSpacesStore;
-</file>
-
-<file path="package.json">
-{
-  "name": "voteria",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@fontsource-variable/inter": "^5.2.8",
-    "@tailwindcss/vite": "^4.2.3",
-    "axios": "^1.17.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "lucide-react": "^1.17.0",
-    "next-themes": "^0.4.6",
-    "radix-ui": "^1.4.3",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "react-markdown": "^10.1.0",
-    "react-router-dom": "^7.14.1",
-    "recharts": "3.8.0",
-    "rehype-highlight": "^7.0.2",
-    "rehype-katex": "^7.0.1",
-    "remark-gfm": "^4.0.1",
-    "remark-math": "^6.0.0",
-    "shadcn": "^4.8.3",
-    "sonner": "^2.0.7",
-    "tailwind-merge": "^3.6.0",
-    "tailwindcss": "^4.2.3",
-    "tw-animate-css": "^1.4.0",
-    "vaul": "^1.1.2",
-    "zustand": "^5.0.14"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.39.4",
-    "@tailwindcss/typography": "^0.5.20",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
-    "eslint": "^9.39.4",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
-    "globals": "^17.5.0",
-    "vite": "^8.0.9"
-  }
 }
 </file>
 
@@ -8281,6 +8467,37 @@ export {
 export default api;
 </file>
 
+<file path="src/layouts/RootLayout.jsx">
+import { AppSidebar } from "@/layouts/root/components/app-sidebar";
+import { SiteHeader } from "@/layouts/root/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Outlet } from "react-router-dom";
+
+export default function RootLayout() {
+  return (
+    <SidebarProvider
+      className="h-svh flex-col overflow-hidden"
+      style={{
+        "--sidebar-width": "calc(var(--spacing) * 48)",
+        "--header-height": "calc(var(--spacing) * 12)",
+      }}
+    >
+      <SiteHeader />
+      <div className="flex min-h-0 w-full flex-1">
+        <AppSidebar />
+        <SidebarInset className="min-h-0 min-w-0">
+          <main className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-muted/30 w-full">
+            <div className="@container/main mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col px-3 py-3 sm:px-4 md:px-6 md:py-5">
+              <Outlet />
+            </div>
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
+  );
+}
+</file>
+
 <file path="src/layouts/root/components/app-sidebar.jsx">
 // src/layouts/root/components/app-sidebar.jsx
 
@@ -8311,7 +8528,7 @@ import {
 
 function mapSpaceToProject(space) {
   return {
-    name: `v/${space.title}`,
+    name: space.title,
     url: `/space/${space.id}`,
     icon: Orbit,
     id: space.id,
@@ -8520,37 +8737,6 @@ export function AppSidebar(props) {
         </div>
       )}
     </>
-  );
-}
-</file>
-
-<file path="src/layouts/RootLayout.jsx">
-import { AppSidebar } from "@/layouts/root/components/app-sidebar";
-import { SiteHeader } from "@/layouts/root/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Outlet } from "react-router-dom";
-
-export default function RootLayout() {
-  return (
-    <SidebarProvider
-      className="h-svh flex-col overflow-hidden"
-      style={{
-        "--sidebar-width": "calc(var(--spacing) * 48)",
-        "--header-height": "calc(var(--spacing) * 12)",
-      }}
-    >
-      <SiteHeader />
-      <div className="flex min-h-0 w-full flex-1">
-        <AppSidebar />
-        <SidebarInset className="min-h-0 min-w-0">
-          <main className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-muted/30 w-full">
-            <div className="@container/main mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col px-3 py-3 sm:px-4 md:px-6 md:py-5">
-              <Outlet />
-            </div>
-          </main>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
   );
 }
 </file>
